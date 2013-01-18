@@ -1,11 +1,13 @@
+-- set up our standard lua environment
 helper = wesnoth.require "lua/helper.lua"
 W = helper.set_wml_action_metatable {}
 _ = wesnoth.textdomain "my-campaign"
 
 V = {}
 helper.set_wml_var_metatable(V)
-wesnoth.dofile "~add-ons/Sandbox/sandbox_helpers.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/sandbox_helpers.lua"
 
+-- set up the player's variables
 if player == nil then
 	player = { }
 	player.resources = {
@@ -13,6 +15,7 @@ if player == nil then
 	}
 end
 
+-- set up town metadata
 if towns == nil then
 	towns = {}
 	
@@ -43,10 +46,12 @@ if towns == nil then
 	}
 end
 
+-- calculates how much a resource is worth in a given town
 function get_resource_value(town, resource)
 	return 1
 end
 
+-- dialog to buy resources at a town
 function town_buy(town)
 	while true do
 		local choices = { }
@@ -76,8 +81,6 @@ function town_buy(town)
 		local choice_values = { }
 		i = 1
 		local amount = 1
-		wesnoth.message(helper.get_gold(1))
-		wesnoth.message(amount*buying_price)
 		while (amount <= town.resources[bought]) and ((amount * buying_price) <= helper.get_gold(1)) do
 			choices[i] = amount.." (Price:"..amount*buying_price..")"
 			choice_values[i] = amount
@@ -108,48 +111,7 @@ function town_buy(town)
 	end
 end
 
-function town_recruit(town)
-	while true do
-		if town.recruits == nil then
-			-- generate some shiny recruits
-			town.recruits = {}
-			for i=1,3 do
-				local unit_type = town.possible_recruits[helper.random(1, #town.possible_recruits)]
-				town.recruits[i] = wesnoth.create_unit { type = unit_type, side = 2, placement = "recall", random_traits = yes }
-			end
-		end
-		
-		local choices = { }
-		local choice_values = { }
-		local i = 1
-		for _, recruit in ipairs(town.recruits) do
-			local unit_type = wesnoth.unit_types[recruit.type]
-			choices[i] = "Recruit " .. recruit.name .. " the " .. unit_type.name .. " for " .. unit_type.cost .. " gold pieces."
-			choice_values[i] = recruit
-			i = i + 1
-		end
-		choices[i] = "Done"
-		
-		user_choice = helper.get_user_choice({ speaker = "narrator", message = "Whom do you wish to recruit?"}, choices)
-		local recruited = choice_values[user_choice]
-		
-		if recruited then
-			local cost = wesnoth.unit_types[recruited.type].cost
-			
-			if cost > helper.get_gold(1) then
-				helper.get_user_choice({ speaker = "narrator", message = "You can't afford that." }, { })
-			else
-				helper.remove(town.recruits, recruited)
-				recruited.side = 1
-				wesnoth.put_recall_unit(recruited)
-				helper.add_gold(1, - cost)
-			end
-		else
-			break
-		end
-	end
-end
-
+-- dialog to sell resources at a town
 function town_sell(town)
 	while true do
 		local choices = { }
@@ -209,6 +171,50 @@ function town_sell(town)
 	end
 end
 
+-- dialog to recruit units at a town
+function town_recruit(town)
+	while true do
+		if town.recruits == nil then
+			-- generate some shiny recruits
+			town.recruits = {}
+			for i=1,3 do
+				local unit_type = town.possible_recruits[helper.random(1, #town.possible_recruits)]
+				town.recruits[i] = wesnoth.create_unit { type = unit_type, side = 2, placement = "recall", random_traits = yes }
+			end
+		end
+		
+		local choices = { }
+		local choice_values = { }
+		local i = 1
+		for _, recruit in ipairs(town.recruits) do
+			local unit_type = wesnoth.unit_types[recruit.type]
+			choices[i] = "Recruit " .. recruit.name .. " the " .. unit_type.name .. " for " .. unit_type.cost .. " gold pieces."
+			choice_values[i] = recruit
+			i = i + 1
+		end
+		choices[i] = "Done"
+		
+		user_choice = helper.get_user_choice({ speaker = "narrator", message = "Whom do you wish to recruit?"}, choices)
+		local recruited = choice_values[user_choice]
+		
+		if recruited then
+			local cost = wesnoth.unit_types[recruited.type].cost
+			
+			if cost > helper.get_gold(1) then
+				helper.get_user_choice({ speaker = "narrator", message = "You can't afford that." }, { })
+			else
+				helper.remove(town.recruits, recruited)
+				recruited.side = 1
+				wesnoth.put_recall_unit(recruited)
+				helper.add_gold(1, - cost)
+			end
+		else
+			break
+		end
+	end
+end
+
+-- main town dialog, called when moving on the town's tile
 function interact_town(x, y)
 	local found_town = nil
 	for _, town in ipairs(towns) do
@@ -226,7 +232,6 @@ function interact_town(x, y)
 			V.message = V.message .. _ "Town Resources: \n"
 			
 			for key, value in pairs(found_town.resources) do
-				wesnoth.message(key)
 				V.resource_name = key
 				V.amount = value
 				
@@ -247,10 +252,12 @@ function interact_town(x, y)
 	end
 end
 
+-- start a battle, moving on to the next map
 function start_battle()
 	helper.quitlevel("plain_fields")
 end
 
+-- generic movement handler
 function player_moved(x1, y1)
 	interact_town(V.x1, V.y1)
 	

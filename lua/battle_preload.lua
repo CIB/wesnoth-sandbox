@@ -4,7 +4,7 @@ _ = wesnoth.textdomain "my-campaign"
 
 V = {}
 helper.set_wml_var_metatable(V)
-wesnoth.dofile "~add-ons/Sandbox/sandbox_helpers.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/sandbox_helpers.lua"
 
 -- Load all the player's units.
 local recall_units = wesnoth.get_recall_units({side = 1})
