@@ -1,18 +1,22 @@
 -- set up our standard lua environment
 helper = wesnoth.require "lua/helper.lua"
 W = helper.set_wml_action_metatable {}
-_ = wesnoth.textdomain "my-campaign"
 
 V = {}
 helper.set_wml_var_metatable(V)
 wesnoth.dofile "~add-ons/Sandbox/lua/sandbox_helpers.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/pickle.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/player.lua"
+_ = helper.textdomain "sandbox"
+
+-- variables that can be used in strings
+S = {}
+
+wesnoth.dofile "~add-ons/Sandbox/lua/time.lua"
 
 -- set up the player's variables
 if player == nil then
-	player = { }
-	player.resources = {
-		Crops = 100
-	}
+	generate_player()
 end
 
 -- set up town metadata
@@ -27,7 +31,7 @@ if towns == nil then
 			Crops = 100
 		},
 		possible_recruits = {
-			"Peasant", "Spearman", "Bowman", "Mage"
+			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
 		},
 		recruits = nil
 	}
@@ -40,7 +44,7 @@ if towns == nil then
 			Crops = 50
 		},
 		possible_recruits = {
-			"Peasant", "Spearman", "Bowman", "Mage"
+			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
 		},
 		recruits = nil
 	}
@@ -179,34 +183,50 @@ function town_recruit(town)
 			town.recruits = {}
 			for i=1,3 do
 				local unit_type = town.possible_recruits[helper.random(1, #town.possible_recruits)]
-				town.recruits[i] = wesnoth.create_unit { type = unit_type, side = 2, placement = "recall", random_traits = yes }
+				local unit = wesnoth.create_unit { type = unit_type, side = 2, placement = "recall", random_traits = yes }
+				town.recruits[i] = { unit_type = unit_type, name = tostring(unit.name) }
 			end
 		end
 		
 		local choices = { }
 		local choice_values = { }
-		local i = 1
-		for _, recruit in ipairs(town.recruits) do
-			local unit_type = wesnoth.unit_types[recruit.type]
+		for i, recruit in ipairs(town.recruits) do
+			local unit_type = wesnoth.unit_types[recruit.unit_type]
 			choices[i] = "Recruit " .. recruit.name .. " the " .. unit_type.name .. " for " .. unit_type.cost .. " gold pieces."
 			choice_values[i] = recruit
-			i = i + 1
 		end
-		choices[i] = "Done"
+		choices[#choices + 1] = "Done"
 		
-		user_choice = helper.get_user_choice({ speaker = "narrator", message = "Whom do you wish to recruit?"}, choices)
+		S.gold = helper.get_gold(1)
+		S.units = #wesnoth.get_recall_units({side = 1})
+		S.more_units = get_maximum_recruits(player) - S.units
+		
+		local message = _ "Whom do you wish to recruit?\n"
+		message = message .. _ "You have {gold} gold left.\n"
+		if S.more_units > 0 then
+			message = message .. _ "You have {units} units in your company and can recruit {more_units} more.\n"
+		else
+			message = message .. _ "You have {units} units in your company, but you can't recruit any more."
+		end
+			
+		user_choice = helper.get_user_choice({ speaker = "narrator", message = message}, choices)
 		local recruited = choice_values[user_choice]
 		
 		if recruited then
-			local cost = wesnoth.unit_types[recruited.type].cost
+			local cost = wesnoth.unit_types[recruited.unit_type].cost
 			
 			if cost > helper.get_gold(1) then
 				helper.get_user_choice({ speaker = "narrator", message = "You can't afford that." }, { })
+			elseif S.more_units <= 0 then
+				helper.dialog("You can't recruit any more units!")
 			else
 				helper.remove(town.recruits, recruited)
-				recruited.side = 1
-				wesnoth.put_recall_unit(recruited)
+				local recruited_unit = wesnoth.create_unit { type = recruited.unit_type, side = 1, placement = "recall", random_traits = yes }
+				recruited_unit.name = recruited.name
+				wesnoth.put_recall_unit(recruited_unit)
 				helper.add_gold(1, - cost)
+				S.name = recruited.name; S.unit_type = recruited.unit_type; S.cost = cost
+				wesnoth.message( _ "You recruited {name}, the {unit_type} for {cost} gold!" )
 			end
 		else
 			break
@@ -227,25 +247,23 @@ function interact_town(x, y)
 	if found_town then
 		local user_choice = nil
 		while user_choice ~= "Done" do
-			V.town_name = found_town.name
-			V.message = _ "Welcome to $town_name!\n"
-			V.message = V.message .. _ "Town Resources: \n"
+			S.town_name = found_town.name
+			local message = _ "Welcome to {town_name}!\n";
+			message = message .. _ "Town Resources: \n"
 			
-			for key, value in pairs(found_town.resources) do
-				V.resource_name = key
-				V.amount = value
-				
-				V.message = V.message .. _ "\t".. V.resource_name .. "\t\t" .. V.amount .. "\n"
+			for resource_name, amount in pairs(found_town.resources) do
+				S.resource_name = resource_name; S.amount = amount
+				message = message .. _ "\t{resource_name}\t\t{amount}\n"
 			end
 			
-			local choices = { "Buy Resources", "Sell Resources", "Tavern", "Done" }
-			user_choice = choices[helper.get_user_choice({ speaker = "narrator", message = V.message}, choices)]
+			local choices = { _ "Buy Resources", _ "Sell Resources", _ "Tavern", _ "Done" }
+			user_choice = choices[helper.get_user_choice({ speaker = "narrator", message = message}, choices)]
 			
-			if user_choice == "Buy Resources" then
+			if user_choice == _ "Buy Resources" then
 				town_buy(found_town)
-			elseif user_choice == "Sell Resources" then
+			elseif user_choice == _ "Sell Resources" then
 				town_sell(found_town)
-			elseif user_choice == "Tavern" then
+			elseif user_choice == _ "Tavern" then
 				town_recruit(found_town)
 			end
 		end
@@ -254,15 +272,73 @@ end
 
 -- start a battle, moving on to the next map
 function start_battle()
+	save_overworld()
+	
+	local next_battle = {}
+	next_battle.encounter_type = "Bandits"
+	next_battle.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 2)
+	if next_battle.number_enemies < 1 then next_battle.number_enemies = 1 end
+	
+	V.next_battle = pickle(next_battle)
+	helper.set_global_variable("next_battle", "next_battle")
+	
+	helper.dialog("You're attacked by a troup of bandits!")
 	helper.quitlevel("plain_fields")
 end
 
 -- generic movement handler
 function player_moved(x1, y1)
+	local max_moves = wesnoth.get_variable("unit.max_moves")
+	local tiles_moved = max_moves - wesnoth.get_variable("unit.moves")
+	local movement_percentage = tiles_moved / max_moves
+	local previous_time = player.time
+	-- full movement is how far you can get in one full day(24 hours)
+	player.time = player.time + math.ceil(movement_percentage * 24)
+	
+	if get_day(player.time) ~= get_day(previous_time) then
+		wesnoth.message( _ "A day has passed, it is now "..get_time_string(player.time))
+	end
+	
 	interact_town(V.x1, V.y1)
 	
 	if helper.random(1, 5) == 1 then
-		helper.dialog("You're attacked by a troup of bandits!")
 		start_battle()
 	end
+	
+    wesnoth.set_variable("unit.moves", wesnoth.get_variable("unit.max_moves"))
+	W.unstore_unit({variable = "unit"})
 end
+
+-- save the overworld metadata
+function save_overworld()
+	local leader = helper.get_leader(1)
+	local savegame = { player = player, towns = towns }
+	savegame.player.x = leader.x
+	savegame.player.y = leader.y
+	savegame.player.gold = helper.get_gold(1)
+	savegame.towns = towns
+	V.savegame = pickle(savegame)
+	
+	helper.set_global_variable("savegame", "savegame")
+end
+
+-- load the overworld metadata
+function load_overworld()
+	helper.get_global_variable("savegame", "savegame")
+	
+	-- if there's no savegame yet, abort
+	if type(V.savegame) ~= "string" or V.savegame == "" then
+		return
+	end
+	
+	local savegame = unpickle(V.savegame)
+	local leader = helper.get_leader(1)
+	towns = savegame.towns
+	
+	player = savegame.player
+	helper.set_gold(1, player.gold)
+	wesnoth.put_unit(player.x, player.y, leader)
+end
+
+load_overworld()
+add_player_overview_button()
