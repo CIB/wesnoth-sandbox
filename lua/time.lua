@@ -7,26 +7,31 @@
 -- so each year has 360 days
 -- that's it
 
+HOUR = 1
+DAY = 24
+MONTH = 30*24
+YEAR = 12*30*24
+
 function store_time(year, month, day, hour)
-	return 12*30*24*year + 30*24*month + 24*day + hour
+	return YEAR*year + MONTH*month + DAY*day + HOUR*hour
 end
 
 months_of_the_year = { _ "January", _ "February", _ "March", _ "April", _ "May", _ "June",  _ "July", _ "August", _ "September", _ "November", _ "October", _ "December" }
 
 function get_year(hour)
-	return math.floor(hour / (12*30*24))
+	return math.floor(hour / YEAR)
 end
 
 function get_month(hour)
-	return math.floor((hour % (12*30*24)) / (30 * 24))
+	return math.floor((hour % YEAR) / MONTH)
 end
 
 function get_day(hour)
-	return math.floor((hour % (30*24)) / 24)
+	return math.floor((hour % MONTH) / DAY)
 end
 
 function get_hour(hour)
-	return math.floor(hour % 24)
+	return math.floor(hour % DAY)
 end
 
 function get_time_string(hour)
