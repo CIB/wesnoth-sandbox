@@ -43,3 +43,7 @@ factions["Bandits"] = {
 		Bandits = 100
 	}
 }
+
+function get_faction_name(faction)
+	return factions[faction].name
+end

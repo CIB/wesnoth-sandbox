@@ -1,18 +1,5 @@
--- set up our standard lua environment
-helper = wesnoth.require "lua/helper.lua"
-W = helper.set_wml_action_metatable {}
-
-V = {}
-helper.set_wml_var_metatable(V)
-wesnoth.dofile "~add-ons/Sandbox/lua/sandbox_helpers.lua"
-wesnoth.dofile "~add-ons/Sandbox/lua/pickle.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/setup_helpers.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/player.lua"
-_ = helper.textdomain "sandbox"
-
--- variables that can be used in strings
-S = {}
-
-wesnoth.dofile "~add-ons/Sandbox/lua/time.lua"
 
 -- set up the player's variables
 if player == nil then
@@ -347,14 +334,10 @@ function save_overworld()
 	savegame.towns = towns
 	savegame.battle_data = battle_data
 	V.savegame = pickle(savegame)
-	
-	helper.set_global_variable("savegame", "savegame")
 end
 
 -- load the overworld metadata
 function load_overworld()
-	helper.get_global_variable("savegame", "savegame")
-	
 	-- if there's no savegame yet, abort
 	if type(V.savegame) ~= "string" or V.savegame == "" then
 		return
@@ -371,3 +354,7 @@ end
 
 load_overworld()
 add_player_overview_button()
+
+function scenario_start()
+
+end
