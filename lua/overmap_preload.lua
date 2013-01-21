@@ -33,7 +33,9 @@ if towns == nil then
 		possible_recruits = {
 			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
 		},
-		recruits = nil
+		recruits = nil,
+		guards = 5,
+		faction = "Humans"
 	}
 	
 	towns[2] = { 
@@ -46,7 +48,9 @@ if towns == nil then
 		possible_recruits = {
 			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
 		},
-		recruits = nil
+		recruits = nil,
+		guards = 5,
+		faction = "Humans"
 	}
 end
 
@@ -236,19 +240,16 @@ end
 
 -- main town dialog, called when moving on the town's tile
 function interact_town(x, y)
-	local found_town = nil
-	for _, town in ipairs(towns) do
-		if town.x == x and town.y == y then
-			found_town = town
-			break
-		end
-	end
+	local found_town = get_town(x, y)
 	
 	if found_town then
 		local user_choice = nil
 		while user_choice ~= "Done" do
 			S.town_name = found_town.name
-			local message = _ "Welcome to {town_name}!\n";
+			S.relation = get_faction_relation(player, found_town.faction)
+			S.faction = found_town.faction
+			local message = _ "You enter {town_name}, a village of {faction}.\n";
+			message = message .. _ "Relation: {relation}\n"
 			message = message .. _ "Town Resources: \n"
 			
 			for resource_name, amount in pairs(found_town.resources) do
@@ -256,7 +257,7 @@ function interact_town(x, y)
 				message = message .. _ "\t{resource_name}\t\t{amount}\n"
 			end
 			
-			local choices = { _ "Buy Resources", _ "Sell Resources", _ "Tavern", _ "Done" }
+			local choices = { _ "Buy Resources", _ "Sell Resources", _ "Tavern", _ "Attack", _ "Done" }
 			user_choice = choices[helper.get_user_choice({ speaker = "narrator", message = message}, choices)]
 			
 			if user_choice == _ "Buy Resources" then
@@ -265,25 +266,48 @@ function interact_town(x, y)
 				town_sell(found_town)
 			elseif user_choice == _ "Tavern" then
 				town_recruit(found_town)
+			elseif user_choice == _ "Attack" then
+				start_town_battle(found_town)
+				return
 			end
 		end
 	end
 end
 
--- start a battle, moving on to the next map
-function start_battle()
+-- start a battle with bandits, moving on to the next map
+function start_bandit_battle()
+	battle_data = {}
+	battle_data.encounter_type = "Bandits"
+	battle_data.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 2)
+	if battle_data.number_enemies < 1 then battle_data.number_enemies = 1 end
 	save_overworld()
-	
-	local next_battle = {}
-	next_battle.encounter_type = "Bandits"
-	next_battle.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 2)
-	if next_battle.number_enemies < 1 then next_battle.number_enemies = 1 end
-	
-	V.next_battle = pickle(next_battle)
-	helper.set_global_variable("next_battle", "next_battle")
 	
 	helper.dialog("You're attacked by a troup of bandits!")
 	helper.quitlevel("plain_fields")
+end
+
+function start_elf_battle()
+	battle_data = {}
+	battle_data.encounter_type = "Elves"
+	battle_data.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 2)
+	if battle_data.number_enemies < 1 then battle_data.number_enemies = 1 end
+	save_overworld()
+	
+	helper.dialog("You're attacked by a wandering group of elves.")
+	helper.quitlevel("plain_fields")
+end
+
+-- start a battle with a town
+function start_town_battle(town)
+	battle_data = {}
+	battle_data.encounter_type = "Town"
+	battle_data.number_enemies = town.guards
+	battle_data.town = town.name
+	
+	save_overworld()
+	
+	helper.dialog("As you attempt to loot the town, the guards challenge you!")
+	helper.quitlevel("town")
 end
 
 -- generic movement handler
@@ -295,14 +319,18 @@ function player_moved(x1, y1)
 	-- full movement is how far you can get in one full day(24 hours)
 	player.time = player.time + math.ceil(movement_percentage * 24)
 	
-	if get_day(player.time) ~= get_day(previous_time) then
+	if(get_town(V.x1, V.y1)) then
+		interact_town(V.x1, V.y1)
+	elseif get_day(player.time) ~= get_day(previous_time) then
 		wesnoth.message( _ "A day has passed, it is now "..get_time_string(player.time))
-	end
-	
-	interact_town(V.x1, V.y1)
-	
-	if helper.random(1, 5) == 1 then
-		start_battle()
+		local n = helper.random(1, 5)
+		if n == 1 and get_faction_relation(player, "Bandits") < 0 then
+			start_bandit_battle()
+			return
+		elseif n == 2 and get_faction_relation(player, "Elves") < 0 then
+			start_elf_battle()
+			return
+		end
 	end
 	
     wesnoth.set_variable("unit.moves", wesnoth.get_variable("unit.max_moves"))
@@ -317,6 +345,7 @@ function save_overworld()
 	savegame.player.y = leader.y
 	savegame.player.gold = helper.get_gold(1)
 	savegame.towns = towns
+	savegame.battle_data = battle_data
 	V.savegame = pickle(savegame)
 	
 	helper.set_global_variable("savegame", "savegame")

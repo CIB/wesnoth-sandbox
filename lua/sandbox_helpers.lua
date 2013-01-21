@@ -88,3 +88,24 @@ function helper.remove(t, item)
 		end
 	end
 end
+
+-- get a town by its name
+function get_town_by_name(towns, name)
+	local town = nil
+	for key, t in ipairs(towns) do
+		if t.name == savegame.battle_data.town then
+			town = t
+			break
+		end
+	end
+	return town
+end
+
+-- get a town by x,y coordinate
+function get_town(x, y)
+	for _, town in ipairs(towns) do
+		if town.x == x and town.y == y then
+			return town
+		end
+	end
+end

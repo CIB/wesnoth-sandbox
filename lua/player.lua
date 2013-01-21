@@ -7,6 +7,13 @@ function generate_player()
 	player.fame = 0
 	player.karma = 0
 	player.time = store_time(1000, 1, 1, 1)
+	
+	player.faction_relations = {
+		Humans = 50,
+		Elves = -50,
+		Dwarves = 0,
+		Bandits = -50
+	}
 end
 
 function get_maximum_recruits(player)
@@ -29,4 +36,20 @@ end
 
 function add_player_overview_button()
 	helper.menu_item("player_overview_button", _ "Player Overview", nil, "display_overview")
+end
+
+function get_faction_relation(player, faction)
+	return math.floor(player.faction_relations[faction])
+end
+
+function change_faction_relation(player, faction, value)
+	player.faction_relations[faction] = player.faction_relations[faction] + value
+	if player.faction_relations[faction] < -100 then player.faction_relations[faction] = -100 end
+	if player.faction_relations[faction] >  100 then player.faction_relations[faction] =  100 end
+end
+
+function set_faction_relation(player, faction, value)
+	player.faction_relations[faction] = value
+	if player.faction_relations[faction] < -100 then player.faction_relations[faction] = -100 end
+	if player.faction_relations[faction] >  100 then player.faction_relations[faction] =  100 end
 end
