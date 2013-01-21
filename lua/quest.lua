@@ -21,7 +21,7 @@ function generate_bandit_quest(giver)
 end
 
 -- handler called on all quests when the player moves to x,y on the world map
-function quest_handle_move(quest, x, y)
+function quest_handle_move(quest, x, y, movement_percentage)
 
 end
 

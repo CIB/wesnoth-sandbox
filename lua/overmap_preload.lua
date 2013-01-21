@@ -1,5 +1,7 @@
 wesnoth.dofile "~add-ons/Sandbox/lua/setup_helpers.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/player.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/unique_npc.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/quest.lua"
 
 -- set up the player's variables
 if player == nil then
@@ -20,6 +22,10 @@ if towns == nil then
 		possible_recruits = {
 			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
 		},
+		production = {
+			Crops = 20
+		},
+		npcs = {},
 		recruits = nil,
 		guards = 5,
 		faction = "Humans"
@@ -35,10 +41,42 @@ if towns == nil then
 		possible_recruits = {
 			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
 		},
+		production = {
+			Crops = 20
+		},
+		npcs = {},
 		recruits = nil,
 		guards = 5,
 		faction = "Humans"
 	}
+end
+
+function town_month_passed(town)
+	-- reset recruits
+	town.recruits = nil
+	
+	-- trade and production
+	for resource, amount in pairs(town.resources) do
+		if resource ~= "Gold" then
+			local sell_amount = math.floor(0.2 * amount)
+			local production = town.production[resource] or 0
+			town.resources[resource] = town.resources[resource] - sell_amount + production
+			town.resources.Gold = town.resources.Gold + get_resource_value(town, resource) * sell_amount
+		end
+	end
+	
+	-- guard wages
+	local guard_wage = 5
+	local can_pay_guards = math.min(town.guards, town.resources.Gold / guard_wage)
+	town.resources.Gold = town.resources.Gold - can_pay_guards * guard_wage
+	town.guards = can_pay_guards
+	
+	-- NPC's coming and going
+	if #npcs == 0 then
+		local npc_type = town.possible_recruits[math.random(1, #town.possible_recruits)]
+		local new_npc = create_unique_NPC(npc_type, nil, town.faction, town)
+		table.insert(town.npcs, new_npc)
+	end
 end
 
 -- calculates how much a resource is worth in a given town
@@ -303,6 +341,11 @@ function player_moved(x1, y1)
 	local tiles_moved = max_moves - wesnoth.get_variable("unit.moves")
 	local movement_percentage = tiles_moved / max_moves
 	local previous_time = player.time
+	
+	for key, quest in ipairs(quests) do
+		quest_handle_move(quest, V.x1, V.y1, movement_percentage)
+	end
+	
 	-- full movement is how far you can get in one full day(24 hours)
 	player.time = player.time + math.ceil(movement_percentage * 24)
 	
@@ -333,6 +376,8 @@ function save_overworld()
 	savegame.player.gold = helper.get_gold(1)
 	savegame.towns = towns
 	savegame.battle_data = battle_data
+	savegame.quests = quests
+	savegame.unique_npcs = unique_npcs
 	V.savegame = pickle(savegame)
 end
 
@@ -346,6 +391,8 @@ function load_overworld()
 	local savegame = unpickle(V.savegame)
 	local leader = helper.get_leader(1)
 	towns = savegame.towns
+	quests = savegame.quests
+	unique_npcs = savegame.unique_npcs
 	
 	player = savegame.player
 	helper.set_gold(1, player.gold)
