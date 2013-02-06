@@ -97,6 +97,11 @@ function on_victory()
 		player.fame = player.fame + S.fame
 		change_faction_relation(player, town.faction, -10)
 	end
+	
+	if savegame.battle_data.quest then
+		handle_victory(savegame.battle_data)
+	end
+	
 	save_player()
 end
 

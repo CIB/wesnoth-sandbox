@@ -41,7 +41,10 @@ function Pickle:value_(v)
   if     vtype == "string" then return string.format("%q", v)
   elseif vtype == "number" then return v
   elseif vtype == "table" then return "{"..self:ref_(v).."}"
-  else --error("pickle a "..type(v).." is not supported")
+  elseif vtype == "boolean" then return v
+  else 
+	wesnoth.message("You messed up, trying to pickle a userdata!")
+	return "<<<userdata>>>"
   end  
 end
 

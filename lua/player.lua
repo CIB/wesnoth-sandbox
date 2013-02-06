@@ -27,7 +27,7 @@ end
 function display_overview()
 	S.fame = player.fame
 	S.karma = player.karma
-	S.gold = player.gold
+	S.gold = savegame.player.gold
 	S.units = get_number_units(player)
 	S.max_units = get_maximum_recruits(player)
 	local message = _ "Fame: {fame}\nKarma: {karma}\nGold: {gold}\nUnits: {units}/{max_units}\n"
@@ -52,4 +52,44 @@ function set_faction_relation(player, faction, value)
 	player.faction_relations[faction] = value
 	if player.faction_relations[faction] < -100 then player.faction_relations[faction] = -100 end
 	if player.faction_relations[faction] >  100 then player.faction_relations[faction] =  100 end
+end
+
+function player_adjust_resources(player, deltas)
+	-- true if the player had as many resources as he had to give, false otherwise
+	local rval = true
+
+	for key, value in deltas do
+		if key == "Gold" then
+			if helper.get_gold(1) < (-value) then
+				value = - helper.get_gold(1)
+				rval = false
+			end
+			helper.add_gold(1, value)
+			if value > 0 then
+				S.gold = value
+				helper.message(_ "You get {gold} gold pieces.")
+			else
+				S.gold = -value
+				helper.message(_ "You lose {gold} gold pieces.")
+			end
+		else
+			if player.resources[key] < - value then
+				value = - player.resources[key]
+				rval = false
+			end
+			player.resources[key] = player.resources[key] + value
+			
+			S.resource = key
+			if value > 0 then
+				S.cargos = value
+				helper.message(_ "You get {gold} cargos of {resource}.")
+			else
+				S.cargos = -value
+				helper.message(_ "You lose {gold} cargos of {resource}.")
+			end
+		end
+	end
+	
+	
+	return rval
 end

@@ -2,6 +2,7 @@ wesnoth.dofile "~add-ons/Sandbox/lua/setup_helpers.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/player.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/unique_npc.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/quest.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/faction.lua"
 
 -- set up the player's variables
 if player == nil then
@@ -51,6 +52,14 @@ if towns == nil then
 	}
 end
 
+-- updates all the overmap labels
+function update_labels()
+	--TODO: figure out a way to clear existing labels
+	for key, quest in ipairs(quests) do
+		quest_handle_map(quest)
+	end
+end
+
 function town_month_passed(town)
 	-- reset recruits
 	town.recruits = nil
@@ -72,9 +81,10 @@ function town_month_passed(town)
 	town.guards = can_pay_guards
 	
 	-- NPC's coming and going
-	if #npcs == 0 then
+	if #town.npcs == 0 then
 		local npc_type = town.possible_recruits[math.random(1, #town.possible_recruits)]
-		local new_npc = create_unique_NPC(npc_type, nil, town.faction, town)
+		local new_npc = create_unique_NPC(npc_type, nil, town.faction, town, create_human_citizen_personality())
+		add_quest_to_npc(new_npc, generate_bandit_quest(new_npc))
 		table.insert(town.npcs, new_npc)
 	end
 end
@@ -263,6 +273,36 @@ function town_recruit(town)
 	end
 end
 
+-- talk to NPC's in the town
+function town_talk(town)
+	while true do
+		if #town.npcs == 0 then
+			helper.dialog("There's nobody to talk to..")
+			return
+		end
+		
+		local choices = {}
+		local choice_values = {}
+		local i = 1
+		for k, name in ipairs(town.npcs) do
+			local npc = unique_npcs[name]
+			choices[i] = name
+			choice_values[i] = npc
+			i = i + 1
+		end
+		
+		choices[#choices+1] = "Done"
+		
+		local npc = choice_values[1]
+		if not npc then
+			break
+		end
+		
+		npc_talk(npc)
+		return
+	end
+end
+
 -- main town dialog, called when moving on the town's tile
 function interact_town(x, y)
 	local found_town = get_town(x, y)
@@ -282,7 +322,7 @@ function interact_town(x, y)
 				message = message .. _ "\t{resource_name}\t\t{amount}\n"
 			end
 			
-			local choices = { _ "Buy Resources", _ "Sell Resources", _ "Tavern", _ "Attack", _ "Done" }
+			local choices = { _ "Buy Resources", _ "Sell Resources", _ "Tavern", _ "Talk", _ "Attack", _ "Done" }
 			user_choice = choices[helper.get_user_choice({ speaker = "narrator", message = message}, choices)]
 			
 			if user_choice == _ "Buy Resources" then
@@ -294,6 +334,8 @@ function interact_town(x, y)
 			elseif user_choice == _ "Attack" then
 				start_town_battle(found_town)
 				return
+			elseif user_choice == _ "Talk" then
+				town_talk(found_town)
 			end
 		end
 	end
@@ -307,7 +349,7 @@ function start_bandit_battle()
 	if battle_data.number_enemies < 1 then battle_data.number_enemies = 1 end
 	save_overworld()
 	
-	helper.dialog("You're attacked by a troup of bandits!")
+	helper.dialog("You're attacked by a brigade of bandits!")
 	helper.quitlevel("plain_fields")
 end
 
@@ -337,21 +379,31 @@ end
 
 -- generic movement handler
 function player_moved(x1, y1)
+
 	local max_moves = wesnoth.get_variable("unit.max_moves")
 	local tiles_moved = max_moves - wesnoth.get_variable("unit.moves")
 	local movement_percentage = tiles_moved / max_moves
 	local previous_time = player.time
 	
-	for key, quest in ipairs(quests) do
-		quest_handle_move(quest, V.x1, V.y1, movement_percentage)
-	end
 	
 	-- full movement is how far you can get in one full day(24 hours)
 	player.time = player.time + math.ceil(movement_percentage * 24)
 	
+
+	for key, quest in ipairs(quests) do
+		-- If a battle started or the like, do not process anything else
+		if quest_handle_move(quest, V.x1, V.y1, movement_percentage) then
+			return
+		end
+	end
+	
 	if(get_town(V.x1, V.y1)) then
 		interact_town(V.x1, V.y1)
 	elseif get_day(player.time) ~= get_day(previous_time) then
+		for key, town in ipairs(towns) do
+			town_month_passed(town)
+		end
+		
 		wesnoth.message( _ "A day has passed, it is now "..get_time_string(player.time))
 		local n = helper.random(1, 5)
 		if n == 1 and get_faction_relation(player, "Bandits") < 0 then
@@ -365,6 +417,7 @@ function player_moved(x1, y1)
 	
     wesnoth.set_variable("unit.moves", wesnoth.get_variable("unit.max_moves"))
 	W.unstore_unit({variable = "unit"})
+	update_labels()
 end
 
 -- save the overworld metadata

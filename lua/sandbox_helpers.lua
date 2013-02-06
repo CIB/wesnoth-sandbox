@@ -62,8 +62,8 @@ function helper.random(min, max)
 end
 
 -- simple dialog with text and no options
-function helper.dialog(msg)
-	helper.get_user_choice({ speaker = "narrator", message = msg }, { })
+function helper.dialog(msg, caption, image)
+	helper.get_user_choice({ speaker = "narrator", message = msg, image = image, caption = caption }, { })
 end
 
 -- add a menu item
@@ -108,4 +108,9 @@ function get_town(x, y)
 			return town
 		end
 	end
+end
+
+-- message
+function helper.message(msg)
+	wesnoth.message(msg)
 end
