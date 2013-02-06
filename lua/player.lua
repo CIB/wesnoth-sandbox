@@ -58,7 +58,7 @@ function player_adjust_resources(player, deltas)
 	-- true if the player had as many resources as he had to give, false otherwise
 	local rval = true
 
-	for key, value in deltas do
+	for key, value in pairs(deltas) do
 		if key == "Gold" then
 			if helper.get_gold(1) < (-value) then
 				value = - helper.get_gold(1)
@@ -82,10 +82,10 @@ function player_adjust_resources(player, deltas)
 			S.resource = key
 			if value > 0 then
 				S.cargos = value
-				helper.message(_ "You get {gold} cargos of {resource}.")
+				helper.message(_ "You get {cargos} cargos of {resource}.")
 			else
 				S.cargos = -value
-				helper.message(_ "You lose {gold} cargos of {resource}.")
+				helper.message(_ "You lose {cargos} cargos of {resource}.")
 			end
 		end
 	end

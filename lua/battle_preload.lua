@@ -1,5 +1,6 @@
 wesnoth.dofile "~add-ons/Sandbox/lua/setup_helpers.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/player.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/quest.lua"
 
 function scenario_start()
 	-- Load all the player's units.
@@ -99,7 +100,7 @@ function on_victory()
 	end
 	
 	if savegame.battle_data.quest then
-		handle_victory(savegame.battle_data)
+		quest_handle_victory(savegame.battle_data)
 	end
 	
 	save_player()

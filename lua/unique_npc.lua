@@ -77,7 +77,8 @@ end
 
 -- talk to an NPC
 function npc_talk(npc)
-	if npc.quest and not npc.quest.taken then			
+	if npc.quest and not npc.quest.taken then		
+		-- offer new quest
 		local choices = { _ "I'll do it", _ "No" }
 		local choice_values = { true, false }
 		local tags = { speaker = "narrator", 
@@ -96,7 +97,9 @@ function npc_talk(npc)
 		-- player has taken quest from NPC
 		local msg = get_message(npc.personality, npc.quest.completion_text) .. " " .. get_message(npc.personality, sayings.normal_quest_reward)
 		helper.dialog(msg, get_npc_name(npc.name), get_unit_portrait(npc.name))
+		player_adjust_resources(player, { Gold = helper.random(20, 50), Crops = helper.random(10, 30)} )
 	else
+		-- smalltalk
 		local msg = get_message(npc.personality, sayings.smalltalk)
 		helper.dialog(msg, get_npc_name(npc.name), get_unit_portrait(npc.name))
 	end

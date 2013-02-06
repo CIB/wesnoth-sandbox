@@ -345,7 +345,7 @@ end
 function start_bandit_battle()
 	battle_data = {}
 	battle_data.encounter_type = "Bandits"
-	battle_data.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 2)
+	battle_data.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 1)
 	if battle_data.number_enemies < 1 then battle_data.number_enemies = 1 end
 	save_overworld()
 	
@@ -356,7 +356,7 @@ end
 function start_elf_battle()
 	battle_data = {}
 	battle_data.encounter_type = "Elves"
-	battle_data.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 2)
+	battle_data.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 0)
 	if battle_data.number_enemies < 1 then battle_data.number_enemies = 1 end
 	save_overworld()
 	
@@ -441,7 +441,7 @@ function load_overworld()
 		return
 	end
 	
-	local savegame = unpickle(V.savegame)
+	savegame = unpickle(V.savegame)
 	local leader = helper.get_leader(1)
 	towns = savegame.towns
 	quests = savegame.quests
