@@ -61,6 +61,11 @@ function helper.random(min, max)
   return res
 end
 
+-- pick a random item from a table
+function helper.pick(t)
+	return t[math.random(1, #t)]
+end
+
 -- simple dialog with text and no options
 function helper.dialog(msg, caption, image)
 	helper.get_user_choice({ speaker = "narrator", message = msg, image = image, caption = caption }, { })
@@ -89,17 +94,6 @@ function helper.remove(t, item)
 	end
 end
 
--- get a town by its name
-function get_town_by_name(towns, name)
-	local town = nil
-	for key, t in ipairs(towns) do
-		if t.name == savegame.battle_data.town then
-			town = t
-			break
-		end
-	end
-	return town
-end
 
 -- get a town by x,y coordinate
 function get_town(x, y)

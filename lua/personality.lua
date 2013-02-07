@@ -3,12 +3,23 @@
 
 -- Used both for team units and unique npc's
 
+-- Get the message a specific personality would say in a situation.
+-- If the personality has no override defined, uses the default.
 function get_message(personality, message)
 	local overwrite = personality.talk_overwrite[message.id]
 	
-	return overwrite or message.default
+	local rval = overwrite or message.default
+	
+	-- If the message to use is a list, randomly pick
+	-- a message from the list.
+	if type(rval) == "table" then
+		return rval[math.random(1, #rval)]
+	end
+	
+	return rval
 end
 
+-- Create a new wesnothian citizen standard personality.
 function create_human_citizen_personality()
 	return {
 		faction = "Humans",
@@ -18,10 +29,12 @@ function create_human_citizen_personality()
 	}
 end
 
+-- Generic things NPC's might want to say. The defaults are
+-- defined here, overrides can be defined in individual personalities.
 sayings = {
 	normal_quest_reward = {
 		id = "normal_quest_reward",
-		default = "Take this as reward.."
+		default = { "Take this as reward..", "Please take this as my thanks." }
 	},
 	smalltalk = {
 		id = "smalltalk",

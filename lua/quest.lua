@@ -44,23 +44,21 @@ end
 
 -- handler called on all quests when the player moves to x,y on the world map
 function quest_handle_move(quest, x, y, movement_percentage)
-	if quest.type == "kill bandits" then
-		if quest.target_x == x and quest.target_y == y then
-			-- prepare for a battle
-			battle_data = {}
-			battle_data.encounter_type = "Bandits"
-			battle_data.number_enemies = helper.random(5, 10)
-			battle_data.quest = quest
-			save_overworld()
-			
-			helper.dialog(_ "You find a bandit camp and lay siege to it.")
-			helper.quitlevel("plain_fields")
-			return true
-		end
-	end
-	
 	-- return false to not interrupt the movement
 	return false
+end
+
+-- handler called when a battle starts
+function quest_handle_battle_start(quest, battle_data)
+	if 
+		quest.type == "kill bandits" 				and
+		battle_data.location 						and 
+		battle_data.location.x == quest.target_x 	and
+		battle_data.location.y == quest.target_y 	and
+		battle_data.location.type == "bandit_camp"
+	then
+		battle_data.quest = quest
+	end
 end
 
 -- handler called on all quests when the player wins a battle

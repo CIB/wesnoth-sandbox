@@ -2,7 +2,7 @@ factions = { }
 
 factions["Humans"] = {
 	id = "Humans",
-	name = _ "Human Empire",
+	name = _ "Empire of Wesnoth",
 	relations = {
 		Humans = 100,
 		Elves = 0,
