@@ -2,6 +2,7 @@ wesnoth.dofile "~add-ons/Sandbox/lua/setup_helpers.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/player.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/quest.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/battle_handlers.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/location.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/town.lua"
 
 function scenario_start()
@@ -35,14 +36,18 @@ function scenario_start()
 			helper.place_unit_nearby(enemy_unit, x, y)
 		end
 	end
+	
+	for key, quest in ipairs(savegame.quests) do
+		quest_handle_battle_start(quest, savegame.battle_data)
+	end
 end
 
 -- react to a victory event
 function on_victory()
 	battle_handler.on_victory()
 	
-	if savegame.battle_data.quest then
-		quest_handle_victory(savegame.battle_data)
+	for key, quest in ipairs(savegame.quests) do
+		quest_handle_victory(quest, savegame.battle_data)
 	end
 	
 	save_player()

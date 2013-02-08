@@ -98,6 +98,8 @@ function npc_talk(npc)
 		local msg = get_message(npc.personality, npc.quest.completion_text) .. " " .. get_message(npc.personality, sayings.normal_quest_reward)
 		helper.dialog(msg, get_npc_name(npc.name), get_unit_portrait(npc.name))
 		player_adjust_resources(player, { Gold = helper.random(20, 50), Crops = helper.random(10, 30)} )
+		remove_quest(npc.quest)
+		npc.quest = nil
 	else
 		-- smalltalk
 		local msg = get_message(npc.personality, sayings.smalltalk)

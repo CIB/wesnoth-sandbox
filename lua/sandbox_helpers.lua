@@ -63,7 +63,9 @@ end
 
 -- pick a random item from a table
 function helper.pick(t)
-	return t[math.random(1, #t)]
+	if #t == 0 then return nil end
+	
+	return t[helper.random(1, #t)]
 end
 
 -- simple dialog with text and no options

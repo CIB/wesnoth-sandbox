@@ -26,13 +26,31 @@ end
 
 -- generate a bandit quest
 function generate_bandit_quest(giver)
-	return create_bandit_quest(2, 2, 10*DAY, giver)
+	local bandit_camps = {}
+	for key, location in ipairs(locations) do
+		if location.type == "bandit_camp" then
+			table.insert(bandit_camps, location)
+		end
+	end
+	
+	local location = helper.pick(bandit_camps)
+	
+	if location then
+		return create_bandit_quest(location.x, location.y, 10*DAY, giver)
+	end
 end
 
 -- add a quest to the player
 function add_quest(quest)
 	table.insert(quests, quest)
 	quest.taken = player.time
+end
+
+-- remove a quest from the player
+function remove_quest(quest)
+	for key, value in ipairs(quests) do
+		if value == quest then table.remove(quests, key); break end
+	end
 end
 
 -- handler called on all quests to update map meta-info
@@ -62,10 +80,10 @@ function quest_handle_battle_start(quest, battle_data)
 end
 
 -- handler called on all quests when the player wins a battle
-function quest_handle_victory(battle_data)
+function quest_handle_victory(quest, battle_data)
 	local quest = battle_data.quest
 	
-	if quest.type == "kill bandits" then
+	if quest and quest.type == "kill bandits" then
 		quest.completed = true
 	end
 end

@@ -51,12 +51,12 @@ end
 
 function on_draw.bandit_camp(location)
 	W.label({x=location.x, y=location.y, text=location.name, color="255,255,255"})
-	wesnoth.add_tile_overlay(location.x, location.y, { image = "terrain/castle/encampment.png" })
+	wesnoth.add_tile_overlay(location.x, location.y, { image = "terrain/castle/encampment/tent2.png" })
 end
 
 function create_bandit_camp(x, y)
 	local rval = {
-		type = "bandit_camp",
+		location_type = "bandit_camp",
 		name = "Bandit Camp",
 		x = x,
 		y = y,

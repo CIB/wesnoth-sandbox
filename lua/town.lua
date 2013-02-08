@@ -1,7 +1,7 @@
 -- manage towns
 
 function generate_human_town(name, x, y)
-	return { 
+	local rval = { 
 		x = x, y = y,
 		name = name,
 		resources = {
@@ -18,17 +18,31 @@ function generate_human_town(name, x, y)
 		recruits = nil,
 		guards = 5,
 		faction = "Humans",
-		type = "Human Town"
+		type = "Human Town",
+		location_type = "town"
 	}
+	
+	return rval
+end
+
+function add_town(town)
+	local x,y = town.x, town.y
+	add_location(x, y, town)
+	table.insert(towns, town)
+end
+
+function on_draw.town(town)
+	W.label({x=town.x, y=town.y, text=town.name, color="255,255,255"})
+	--wesnoth.add_tile_overlay(location.x, location.y, { image = "terrain/castle/encampment/tent2.png" })
 end
 
 -- set up towns
 function generate_towns()
 	towns = {}
 	
-	towns[1] = generate_human_town("Forloss", 30, 26)
-	towns[2] = generate_human_town("Aedinn", 34, 25)
-	towns[3] = generate_human_town("Scaldyn", 30, 24)
+	add_town(generate_human_town("Forloss", 30, 26))
+	add_town(generate_human_town("Aedinn", 34, 25))
+	add_town(generate_human_town("Scaldyn", 30, 24))
 end
 
 
@@ -56,7 +70,10 @@ function town_month_passed(town)
 	if #town.npcs == 0 then
 		local npc_type = town.possible_recruits[math.random(1, #town.possible_recruits)]
 		local new_npc = create_unique_NPC(npc_type, nil, town.faction, town, create_human_citizen_personality())
-		add_quest_to_npc(new_npc, generate_bandit_quest(new_npc))
+		local bandit_quest =  generate_bandit_quest(new_npc)
+		if bandit_quest then
+			add_quest_to_npc(new_npc, bandit_quest)
+		end
 		table.insert(town.npcs, new_npc)
 	end
 end
@@ -274,9 +291,7 @@ function town_talk(town)
 end
 
 -- main town dialog, called when moving on the town's tile
-function interact_town(x, y)
-	local found_town = get_town(x, y)
-	
+function on_move.town(found_town)
 	if found_town then
 		local user_choice = nil
 		while user_choice ~= "Done" do

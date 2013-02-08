@@ -3,9 +3,9 @@ wesnoth.dofile "~add-ons/Sandbox/lua/player.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/unique_npc.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/quest.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/faction.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/location.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/town.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/battle_handlers.lua"
-wesnoth.dofile "~add-ons/Sandbox/lua/location.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/terrain.lua"
 
 
@@ -13,21 +13,18 @@ wesnoth.dofile "~add-ons/Sandbox/lua/terrain.lua"
 function update_labels()
 	--TODO: figure out a way to clear existing labels
 	
-	-- draw all town labels(low priority)
-	for key, town in ipairs(towns) do
-		W.label({x=town.x, y=town.y, text=town.name, color="255,255,255"})
-	end
-	
 	-- draw locations, low priority
 	for key, location in ipairs(locations) do
-		if on_draw[location.type] then
-			on_draw[location.type](location)
+		if on_draw[location.location_type] then
+			on_draw[location.location_type](location)
 		end
 	end
 	
 	-- draw all quest labels(high priority)
 	for key, quest in ipairs(quests) do
-		quest_handle_map(quest)
+		if not quest.completed then
+			quest_handle_map(quest)
+		end
 	end
 end
 
@@ -94,24 +91,22 @@ function player_moved(x1, y1)
 	
 	-- check if we moved onto a location
 	local location = get_location(x1, y1)
-	if location and on_move[location.type] then
-		if on_move[location.type](location) then
+	if location and on_move[location.location_type] then
+		if on_move[location.location_type](location) then
 			return
 		end
 	end
 	
-	if(get_town(V.x1, V.y1)) then
-		interact_town(V.x1, V.y1)
-	elseif get_day(player.time) ~= get_day(previous_time) then
-		for key, town in ipairs(towns) do
-			town_month_passed(town)
-		end
-		
+	if (not get_location(x1, y1)) and get_day(player.time) ~= get_day(previous_time) then
 		local number_bandit_camps = 0
 		for key, pos in ipairs(bandit_camp_positions) do
 			if not get_location(pos.x, pos.y) and math.random(1,1) == 1 then
 				create_bandit_camp(pos.x, pos.y)
 			end
+		end
+		
+		for key, town in ipairs(towns) do
+			town_month_passed(town)
 		end
 		
 		wesnoth.message( _ "A day has passed, it is now "..get_time_string(player.time))
@@ -175,5 +170,6 @@ add_player_overview_button()
 
 function scenario_start()
 	save_overworld()
-	update_labels()
 end
+
+update_labels()
