@@ -28,7 +28,7 @@ end
 function generate_bandit_quest(giver)
 	local bandit_camps = {}
 	for key, location in ipairs(locations) do
-		if location.type == "bandit_camp" then
+		if location.location_type == "bandit_camp" then
 			table.insert(bandit_camps, location)
 		end
 	end

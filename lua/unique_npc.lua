@@ -10,21 +10,25 @@ unique_npcs = { }
 -- create a unique NPC
 -- returns the name of the new NPC, or nil if name
 -- was given and an NPC with that name already existed
-function create_unique_NPC(type, name, faction, location, personality)
+function create_unique_NPC(type, name, faction, location, personality, side)
+	side = side or 2
+	
+	-- TODO: if we're to generate the name, make sure it's unique
+	local unit = wesnoth.create_unit { type = type, side = side, placement = "recall", random_traits = true }
+	
 	if not name then
-		while true do
-			local unit = wesnoth.create_unit { type = type, side = 2, placement = "recall" }
-			name = unit.name
-			-- don't need the unit handle for now anymore, put it away
-			wesnoth.extract_unit(unit)
-			
-			if not unique_npcs[name] then break end
-		end
+		name = unit.name
 	else
-		if unique_npcs[name] then
-			return nil
-		end
+		unit.name = name
 	end
+	
+	-- don't need the unit handle for now anymore, put it away
+	if side == 1 then
+		wesnoth.put_recall_unit(unit)
+	else
+		wesnoth.extract_unit(unit)
+	end
+		
 	
 	name = tostring(name)
 	

@@ -247,12 +247,13 @@ function town_recruit(town)
 				helper.dialog("You can't recruit any more units!")
 			else
 				helper.remove(town.recruits, recruited)
-				local recruited_unit = wesnoth.create_unit { type = recruited.unit_type, side = 1, placement = "recall", random_traits = yes }
-				recruited_unit.name = recruited.name
-				wesnoth.put_recall_unit(recruited_unit)
+				local recruited_unit_name = create_unique_NPC(recruited.unit_type, recruited.name, "player", nil, create_human_citizen_personality(), 1)
+				local npc = unique_npcs[recruited_unit_name]
 				helper.add_gold(1, - cost)
 				S.name = recruited.name; S.unit_type = recruited.unit_type; S.cost = cost
 				wesnoth.message( _ "You recruited {name}, the {unit_type} for {cost} gold!" )
+				local msg = get_message(npc.personality, sayings.join_player)
+				helper.dialog(msg, get_npc_name(npc.name), get_unit_portrait(npc.name))
 			end
 		else
 			break
@@ -337,3 +338,4 @@ function get_town_by_name(towns, name)
 	end
 	return town
 end
+             
