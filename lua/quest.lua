@@ -73,7 +73,7 @@ function quest_handle_battle_start(quest, battle_data)
 		battle_data.location 						and 
 		battle_data.location.x == quest.target_x 	and
 		battle_data.location.y == quest.target_y 	and
-		battle_data.location.type == "bandit_camp"
+		battle_data.location.location_type == "bandit_camp"
 	then
 		battle_data.quest = quest
 	end
