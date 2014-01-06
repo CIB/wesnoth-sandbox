@@ -55,6 +55,32 @@ function create_human_citizen_personality()
 	}
 end
 
+-- get the highest attribute for this character, useful for selecting
+-- a message
+function get_highest_attribute(personality, select_from)
+	local highest_value = nil
+	local highest_attribute = nil
+	local sign = nil -- "plus" for a positive attribute, "minus" for a negative attribute
+	
+	for attribute, value in pairs(personality.attributes) do
+		-- only consider attributes contained in select_from
+		if select_from[attribute] then
+			if (highest_value == nil) or (math.abs(value) > highest_value) then
+				highest_value = math.abs(value)
+				highest_attribute = attribute
+				
+				if math.abs(value) >= 0 then
+					sign = "plus"
+				else
+					sigh = "minus"
+				end
+			end
+		end
+	end
+	
+	return highest_attribute, sign
+end
+
 -- Generic things NPC's might want to say. The defaults are
 -- defined here, overrides can be defined in individual personalities.
 sayings = {
@@ -69,13 +95,14 @@ sayings = {
 	join_player = {
 		id = "join_player",
 		default = function(personality, message)
-			if personality.attributes.shy > 40 then
+			local highest_attribute, sign = get_highest_attribute(personality, {shy=true, proud=true, nice=true})
+			if highest_attribute == "shy" and sign == "plus" then
 				return "..." -- Too shy to speak!
-			elseif personality.attributes.proud > 20 then
-				return "It was a wise choice to hire me! I'll be useful!"
-			elseif personality.attributes.nice > 20 then
+			elseif highest_attribute == "proud" and sign == "plus" then
+				return "It was a wise choice to hire me! You won't regret it!"
+			elseif highest_attribute == "nice" and sign == "plus" then
 				return "I shall serve you to my best ability."
-			elseif personality.attributes.nice < 20 then
+			elseif highest_attribute == "nice" and sign == "minus" then
 				return "Eh.. Be sure that I'll only stick around if the pay is good."
 			else
 				return "Let's set out, then."

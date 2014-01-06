@@ -6,8 +6,9 @@ function generate_human_town(name, x, y)
 		name = name,
 		resources = {
 			Gold = helper.random(50, 200),
-			Crops = helper.random(50, 200)
+			Crops = helper.random(100, 200)
 		},
+		population = helper.random(50, 100),
 		possible_recruits = {
 			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
 		},
@@ -17,6 +18,31 @@ function generate_human_town(name, x, y)
 		npcs = {},
 		recruits = nil,
 		guards = 5,
+		faction = "Humans",
+		type = "Human Town",
+		location_type = "town"
+	}
+	
+	return rval
+end
+
+function generate_human_city(name, x, y)
+	local rval = { 
+		x = x, y = y,
+		name = name,
+		resources = {
+			Gold = helper.random(500, 1000),
+			Crops = 0
+		},
+		population = helper.random(500, 1000),
+		possible_recruits = {
+			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
+		},
+		production = {
+		},
+		npcs = {},
+		recruits = nil,
+		guards = 20,
 		faction = "Humans",
 		type = "Human Town",
 		location_type = "town"
@@ -43,6 +69,7 @@ function generate_towns()
 	add_town(generate_human_town("Forloss", 30, 26))
 	add_town(generate_human_town("Aedinn", 34, 25))
 	add_town(generate_human_town("Scaldyn", 30, 24))
+	add_town(generate_human_city("Weldyn", 35, 28))
 end
 
 
@@ -59,6 +86,16 @@ function town_month_passed(town)
 			town.resources.Gold = town.resources.Gold + get_resource_value(town, resource) * sell_amount
 		end
 	end
+	
+	-- feed citizens
+	local citizens_fed = town.population
+	if town.population > town.resources["Crops"] then
+		citizens_fed = town.resources["Crops"]
+	end
+	town.resources["Crops"] = town.resources["Crops"] - citizens_fed
+	
+	-- TODO: actually do some morale related stuff, rather than just killing citizens
+	town.population = citizens_fed
 	
 	-- guard wages
 	local guard_wage = 5
@@ -298,8 +335,10 @@ function on_move.town(found_town)
 		while user_choice ~= "Done" do
 			S.town_name = found_town.name
 			S.relation = get_faction_relation(player, found_town.faction)
+			S.population = found_town.population
 			S.faction = found_town.faction
 			local message = _ "You enter {town_name}, a village of {faction}.\n";
+			message = message .. _ "Population: {population}\n"
 			message = message .. _ "Relation: {relation}\n"
 			message = message .. _ "Town Resources: \n"
 			
