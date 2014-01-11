@@ -110,3 +110,22 @@ end
 function helper.message(msg)
 	wesnoth.message(msg)
 end
+
+function helper.create_stored_unit(unit_table)
+	local unit = wesnoth.create_unit(unit_table)
+	local units = helper.get_variable_array("stored_units") or {}
+	unit.__cfg.store_index = #units + 1 -- store the index in the unit list
+	table.insert(units, unit.__cfg)
+	helper.set_variable_array("stored_units", units)
+	return unit
+end
+
+function helper.update_stored_unit(unit)
+	local units = helper.get_variable_array("stored_units") or {}
+	table[unit.__cfg.store_index] = unit.__cfg
+	helper.set_variable_array("stored_units", units)
+end
+
+function helper.unstore_unit_by_id(id)
+	wesnoth.fire("unstore_unit", { variable = "stored_units["..id.."]" })
+end
