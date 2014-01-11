@@ -205,5 +205,5 @@ update_labels()
 local leader = create_unique_NPC("Iron Mauler", "Drun", "Humans", nil, create_human_citizen_personality(), 2)
 local army = create_army("Trade Caravan", leader, "caravan")
 populate_army(army, {"Bowman", "Sergeant", "Spearman", "Mage", "Horseman"}, 10)
-army.destinations = { { x = 30, y = 26 }, { x = 30, y = 24 } }
+army.destinations = { { x = 30, y = 26 }, { x = 30, y = 24 }, { x = 34, y = 25}, { x = 35, y = 28} }
 local army_unit = army_place_on_map(army, 34, 25)

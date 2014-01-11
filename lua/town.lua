@@ -24,8 +24,9 @@ function generate_human_town(name, x, y)
 	}
 	
 	local leader = create_unique_NPC("Peasant", nil, "Humans", nil, create_human_citizen_personality(), 2)
-	rval.army = create_army("Town Populace", leader, nil)
-	populate_army(rval.army, rval.possible_recruits, 10)
+	local army = create_army("Town Populace", leader, nil)
+	populate_army(army, rval.possible_recruits, 10)
+	rval.army = army.id
 	
 	return rval
 end
