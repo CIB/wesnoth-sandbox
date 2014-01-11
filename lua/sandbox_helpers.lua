@@ -126,6 +126,7 @@ function helper.unstore_unit(id, x, y, side)
 	local unit = wesnoth.get_recall_units({ id = id })[1]
 	unit.side = side
 	wesnoth.put_unit(x, y, unit)
+	return wesnoth.get_units({x = x, y = y})[1]
 end
 
 function helper.store_unit(unit)

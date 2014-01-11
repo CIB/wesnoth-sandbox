@@ -74,7 +74,8 @@ end
 function player_moved(x1, y1)
 	local leader = create_unique_NPC("Elvish Sylph", "Drun", "Humans", nil, create_human_citizen_personality(), 2)
 	local army = create_army("Sylph Army", leader)
-	army_place_on_map(army, 10, 10)
+	local army_unit = army_place_on_map(army, 10, 10)
+	army_move_towards(army, army_unit, 15, 15, 3)
 
 	local max_moves = wesnoth.get_variable("unit.max_moves")
 	local tiles_moved = max_moves - wesnoth.get_variable("unit.moves")

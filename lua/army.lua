@@ -24,5 +24,22 @@ end
 
 function army_place_on_map(army, x, y)
 	army.position = {x = x, y = y}
-	helper.unstore_unit(army.overmap_unit_id, x, y, 2)
+	return helper.unstore_unit(army.overmap_unit_id, x, y, 2)
+end
+
+function army_move_towards(army, army_unit, x, y, turns)
+	local path = wesnoth.find_path(army_unit, x, y)
+	army_unit.moves = turns
+	
+	local furthest = nil
+	for i, tile in ipairs(path) do
+		local check_path = wesnoth.find_path(army_unit, tile[1], tile[2], {max_cost=turns})
+		if #check_path > 0 then furthest = check_path end
+	end
+	
+	local destination = furthest[#furthest]
+	if not destination then return end
+	
+	helper.move_unit_fake({id = army_unit.id}, destination[1], destination[2])
+	army.position = { x = destination[1], y = destination[2] }
 end
