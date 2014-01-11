@@ -76,10 +76,10 @@ end
 -- add a menu item
 -- note that function_name must refer to a function 
 -- in the global environment with the interface: function f()
-function helper.menu_item(id, description, image, function_name)
+function helper.menu_item(id, description, image, function_name, condition)
 	W.set_menu_item({id = id, description = description, { "command", { { "lua", {
 				code = function_name.."()"
-	}}}}})
+	}}}}, { "show_if", condition }})
 end
 
 -- get the leader of a side

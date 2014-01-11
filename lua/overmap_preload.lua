@@ -72,19 +72,13 @@ end
 
 -- generic movement handler
 function player_moved(x1, y1)
-	local leader = create_unique_NPC("Elvish Sylph", "Drun", "Humans", nil, create_human_citizen_personality(), 2)
-	local army = create_army("Sylph Army", leader)
-	local army_unit = army_place_on_map(army, 10, 10)
-	army_move_towards(army, army_unit, 15, 15, 3)
-
-	local max_moves = wesnoth.get_variable("unit.max_moves")
+	--[[local max_moves = wesnoth.get_variable("unit.max_moves")
 	local tiles_moved = max_moves - wesnoth.get_variable("unit.moves")
 	local movement_percentage = tiles_moved / max_moves
-	local previous_time = player.time
 	
 	
 	-- full movement is how far you can get in one full day(24 hours)
-	player.time = player.time + math.ceil(movement_percentage * 24)
+	]]
 	
 
 	for key, quest in ipairs(quests) do
@@ -102,31 +96,9 @@ function player_moved(x1, y1)
 		end
 	end
 	
-	if (not get_location(x1, y1)) and get_day(player.time) ~= get_day(previous_time) then
-		local number_bandit_camps = 0
-		for key, pos in ipairs(bandit_camp_positions) do
-			if not get_location(pos.x, pos.y) and math.random(1,1) == 1 then
-				create_bandit_camp(pos.x, pos.y)
-			end
-		end
-		
-		for key, town in ipairs(towns) do
-			town_month_passed(town)
-		end
-		
-		wesnoth.message( _ "A day has passed, it is now "..get_time_string(player.time))
-		local n = helper.random(1, 5)
-		if n == 1 and get_faction_relation(player, "Bandits") < 0 then
-			start_bandit_battle(x1, y1)
-			return
-		elseif n == 2 and get_faction_relation(player, "Elves") < 0 then
-			start_elf_battle(x1, y1)
-			return
-		end
-	end
+    --wesnoth.set_variable("unit.moves", wesnoth.get_variable("unit.max_moves"))
+	--W.unstore_unit({variable = "unit"})
 	
-    wesnoth.set_variable("unit.moves", wesnoth.get_variable("unit.max_moves"))
-	W.unstore_unit({variable = "unit"})
 	update_labels()
 	
 	-- save periodically
@@ -172,9 +144,50 @@ end
 
 load_overworld()
 add_player_overview_button()
+add_army_attack_button()
 
 function scenario_start()
 	save_overworld()
 end
 
+function side_turn()
+	if V.side_number == 1 then
+		-- time passes
+		local previous_time = player.time
+		player.time = player.time + 24
+		
+		if get_day(player.time) ~= get_day(previous_time) then
+			local number_bandit_camps = 0
+			for key, pos in ipairs(bandit_camp_positions) do
+				if not get_location(pos.x, pos.y) and math.random(1,1) == 1 then
+					create_bandit_camp(pos.x, pos.y)
+				end
+			end
+			
+			for key, town in ipairs(towns) do
+				town_month_passed(town)
+			end
+			
+			wesnoth.message( _ "A day has passed, it is now "..get_time_string(player.time))
+		end
+		
+		-- move all other armies
+		for id, army in pairs(savegame.armies) do
+			army_behaviors[army.behavior](army, get_army_unit(army).moves)
+		end
+	end
+end
+
 update_labels()
+
+-- spawn a single caravan for testing purposes
+local leader = create_unique_NPC("Iron Mauler", "Drun", "Humans", nil, create_human_citizen_personality(), 2)
+local army = create_army("Trade Caravan", leader, "caravan")
+army.destinations = { { x = 30, y = 26 }, { x = 30, y = 24 } }
+local army_unit = army_place_on_map(army, 34, 25)
+
+-- also spawn a bandit army
+local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), 2)
+local army = create_army("Bandits", leader, "bandits")
+army.base = { x = 31, y = 21 }
+army_unit = army_place_on_map(army, 31, 22)
