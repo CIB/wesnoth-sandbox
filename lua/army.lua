@@ -17,8 +17,10 @@ function create_army(name, leader, behavior)
 		position = nil,
 		behavior = behavior
 	}
-	local npc = unique_npcs[rval.leader]
-	rval.overmap_unit_id = helper.create_stored_unit { id = rval.id, name = name, type = npc.type }
+	if leader then
+		local npc = unique_npcs[rval.leader]
+		rval.overmap_unit_id = helper.create_stored_unit { id = rval.id, name = name, type = npc.type }
+	end
 	savegame.armies["army_" .. savegame.army_ID] = rval
 	return rval	
 end

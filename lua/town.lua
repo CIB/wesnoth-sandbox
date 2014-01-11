@@ -12,6 +12,9 @@ function generate_human_town(name, x, y)
 		possible_recruits = {
 			"Peasant"
 		},
+		civilian_types = {
+			"Peasant"
+		},
 		production = {
 			Crops = 20
 		},
@@ -42,8 +45,12 @@ function generate_human_town(name, x, y)
 	
 	local leader = create_unique_NPC("Peasant", nil, "Humans", nil, create_human_citizen_personality(), 2)
 	local army = create_army("Town Populace", leader, nil)
-	populate_army(army, rval.possible_recruits, 10)
+	populate_army(army, rval.possible_recruits, 5)
 	rval.army = army.id
+	
+	local civilians = create_army("Town Populace", nil, nil)
+	populate_army(civilians, rval.civilian_types, 10)
+	rval.civilians = civilians.id
 	
 	return rval
 end
