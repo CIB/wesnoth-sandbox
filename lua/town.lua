@@ -20,7 +20,24 @@ function generate_human_town(name, x, y)
 		guards = 5,
 		faction = "Humans",
 		type = "Human Town",
-		location_type = "town"
+		location_type = "town",
+		unit_positions = {
+			guards = {
+				{ x = 7, y = 14 },
+				{ x = 5, y = 13 },
+				{ x = 5, y = 9  },
+				{ x = 7, y = 9  }
+			},
+			civilians = {
+				{ x = 8, y = 12 },
+				{ x = 14, y = 12 },
+				{ x = 11, y = 9 },
+				{ x = 9, y = 10 }
+			},
+			nobles = {
+				{ x = 17, y = 9}
+			}
+		}
 	}
 	
 	local leader = create_unique_NPC("Peasant", nil, "Humans", nil, create_human_citizen_personality(), 2)
@@ -352,7 +369,7 @@ function on_move.town(found_town)
 				message = message .. _ "\t{resource_name}\t\t{amount}\n"
 			end
 			
-			local choices = { _ "Buy Resources", _ "Sell Resources", _ "Tavern", _ "Talk", _ "Attack", _ "Done" }
+			local choices = { _ "Buy Resources", _ "Sell Resources", _ "Tavern", _ "Talk", _ "Attack", _ "Enter", _ "Done" }
 			user_choice = choices[helper.get_user_choice({ speaker = "narrator", message = message}, choices)]
 			
 			if user_choice == _ "Buy Resources" then
@@ -366,6 +383,9 @@ function on_move.town(found_town)
 				return
 			elseif user_choice == _ "Talk" then
 				town_talk(found_town)
+			elseif user_choice == _ "Enter" then
+				town_enter(found_town)
+				return
 			end
 		end
 	end

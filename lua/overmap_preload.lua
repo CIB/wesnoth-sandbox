@@ -66,6 +66,13 @@ function start_town_battle(town)
 	start_battle(town.army, "town", "town")
 end
 
+-- enter a town
+function town_enter(town)
+	savegame.explore_location = town
+	save_overworld()
+	helper.quitlevel("town_explore")
+end
+
 function start_battle(army, battle_handler, next_map)
 	battle_data = battle_data or {}
 	battle_data.battle_handler = battle_handler
