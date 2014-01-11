@@ -60,18 +60,14 @@ end
 -- start a battle with a town
 function start_town_battle(town)
 	battle_data = {}
-	battle_data.battle_handler = "town"
-	battle_data.number_enemies = town.guards
 	battle_data.town = town.name
 	
-	save_overworld()
-	
 	helper.dialog("As you attempt to loot the town, the guards challenge you!")
-	helper.quitlevel("town")
+	start_battle(town.army, "town", "town")
 end
 
 function start_battle(army, battle_handler, next_map)
-	battle_data = {}
+	battle_data = battle_data or {}
 	battle_data.battle_handler = battle_handler
 	battle_data.army = army
 	
@@ -104,6 +100,13 @@ function player_moved(x1, y1)
 		if on_move[location.location_type](location) then
 			return
 		end
+	end
+	
+	local leader = wesnoth.get_units({side = 1, canrecruit = true})[1]
+	
+	if leader.moves == 0 then
+		new_turn()
+		leader.moves = leader.max_moves
 	end
 	
     --wesnoth.set_variable("unit.moves", wesnoth.get_variable("unit.max_moves"))
@@ -162,6 +165,11 @@ end
 
 function side_turn()
 	if V.side_number == 1 then
+		new_turn()
+	end
+end
+
+function new_turn()
 		-- time passes
 		local previous_time = player.time
 		player.time = player.time + 24
@@ -174,8 +182,10 @@ function side_turn()
 				end
 			end
 			
-			for key, town in ipairs(towns) do
-				town_month_passed(town)
+			for key, location in ipairs(locations) do
+				if on_month_passed[location.location_type] then
+					on_month_passed[location.location_type](location)
+				end
 			end
 			
 			wesnoth.message( _ "A day has passed, it is now "..get_time_string(player.time))
@@ -183,9 +193,10 @@ function side_turn()
 		
 		-- move all other armies
 		for id, army in pairs(savegame.armies) do
-			army_behaviors[army.behavior](army, get_army_unit(army).moves)
+			if army.behavior then
+				army_behaviors[army.behavior](army, get_army_unit(army).moves)
+			end
 		end
-	end
 end
 
 update_labels()
@@ -196,10 +207,3 @@ local army = create_army("Trade Caravan", leader, "caravan")
 populate_army(army, {"Bowman", "Sergeant", "Spearman", "Mage", "Horseman"}, 10)
 army.destinations = { { x = 30, y = 26 }, { x = 30, y = 24 } }
 local army_unit = army_place_on_map(army, 34, 25)
-
--- also spawn a bandit army
-local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), 2)
-local army = create_army("Bandits", leader, "bandits")
-populate_army(army, {"Footpad", "Thug", "Thief"}, 5)
-army.base = { x = 31, y = 21 }
-army_unit = army_place_on_map(army, 31, 22)

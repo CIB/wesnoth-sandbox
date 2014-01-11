@@ -15,7 +15,6 @@ function scenario_start()
 	
 	-- Create enemy units from given types
 	local enemy_leader = wesnoth.get_units({side = 2, canrecruit = "yes"})[1]
-	wesnoth.message(savegame.battle_data.army)
 	local army = savegame.armies[savegame.battle_data.army]
 	for i, unit_id in ipairs(army.units) do
 		local x, y = enemy_leader.x, enemy_leader.y

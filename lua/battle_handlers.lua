@@ -29,7 +29,7 @@ function battle_handlers.elves.on_victory()
 	player.fame = player.fame + S.fame
 end
 
-battle_handlers.town = { get_unit_types = function() return get_town_by_name(towns, battle_data.town).possible_recruits end }
+battle_handlers.town = { }
 function battle_handlers.town.on_victory()
 	local town = get_town_by_name(savegame.towns, savegame.battle_data.town)
 	S.gold = town.resources.Gold
@@ -60,7 +60,7 @@ function battle_handlers.town.on_victory()
 	change_faction_relation(player, town.faction, -10)
 end
 
-battle_handlers.default = { get_unit_types = nil }
+battle_handlers.default = { }
 function battle_handlers.default.on_victory()
 	S.gold = math.random(1, 10)
 	S.fame = math.random(1, 10)

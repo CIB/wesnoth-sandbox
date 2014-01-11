@@ -10,7 +10,7 @@ function generate_human_town(name, x, y)
 		},
 		population = helper.random(50, 100),
 		possible_recruits = {
-			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
+			"Peasant"
 		},
 		production = {
 			Crops = 20
@@ -22,6 +22,10 @@ function generate_human_town(name, x, y)
 		type = "Human Town",
 		location_type = "town"
 	}
+	
+	local leader = create_unique_NPC("Peasant", nil, "Humans", nil, create_human_citizen_personality(), 2)
+	rval.army = create_army("Town Populace", leader, nil)
+	populate_army(rval.army, rval.possible_recruits, 10)
 	
 	return rval
 end
@@ -73,7 +77,7 @@ function generate_towns()
 end
 
 
-function town_month_passed(town)
+function on_month_passed.town(town)
 	-- reset recruits
 	town.recruits = nil
 	

@@ -27,6 +27,19 @@ end
 
 on_draw = { }
 on_move = { }
+on_month_passed = { }
+
+function on_month_passed.bandit_camp(location)
+	-- spawn a small bandit army every now and then
+	if math.random(0, 30) == 0 then
+		local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), 2)
+		local army = create_army("Bandits", leader, "bandits")
+		populate_army(army, {"Footpad", "Thug", "Thief"}, math.random(1, 4))
+		army.base = { x = location.x, y = location.y }
+		army_unit = army_place_on_map(army, location.x, location.y)
+	end
+end
+
 
 function on_move.bandit_camp(location)
 	local user_choice = helper.get_user_choice({ speaker = "narrator", message = _ "You stumble upon a camp of bandits. They haven't noticed you yet, and you can still leave unchallenged. Will you attack?"}, { _ "Yes", _ "No" })
