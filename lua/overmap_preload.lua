@@ -70,6 +70,16 @@ function start_town_battle(town)
 	helper.quitlevel("town")
 end
 
+function start_battle(army, battle_handler, next_map)
+	battle_data = {}
+	battle_data.battle_handler = battle_handler
+	battle_data.army = army
+	
+	save_overworld()
+	
+	helper.quitlevel(next_map)
+end
+
 -- generic movement handler
 function player_moved(x1, y1)
 	--[[local max_moves = wesnoth.get_variable("unit.max_moves")
@@ -183,11 +193,13 @@ update_labels()
 -- spawn a single caravan for testing purposes
 local leader = create_unique_NPC("Iron Mauler", "Drun", "Humans", nil, create_human_citizen_personality(), 2)
 local army = create_army("Trade Caravan", leader, "caravan")
+populate_army(army, {"Bowman", "Sergeant", "Spearman", "Mage", "Horseman"}, 10)
 army.destinations = { { x = 30, y = 26 }, { x = 30, y = 24 } }
 local army_unit = army_place_on_map(army, 34, 25)
 
 -- also spawn a bandit army
 local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), 2)
 local army = create_army("Bandits", leader, "bandits")
+populate_army(army, {"Footpad", "Thug", "Thief"}, 5)
 army.base = { x = 31, y = 21 }
 army_unit = army_place_on_map(army, 31, 22)

@@ -59,3 +59,15 @@ function battle_handlers.town.on_victory()
 	player.fame = player.fame + S.fame
 	change_faction_relation(player, town.faction, -10)
 end
+
+battle_handlers.default = { get_unit_types = nil }
+function battle_handlers.default.on_victory()
+	S.gold = math.random(1, 10)
+	S.fame = math.random(1, 10)
+	wesnoth.message( _ "You are victorious!")
+	wesnoth.message( _ "You find {gold} gold pieces on your enemies' corpses." )
+	wesnoth.message( _ "Songs of your valour on the battlefield spread. You gain {fame} fame." )
+	
+	player.gold = player.gold + S.gold
+	player.fame = player.fame + S.fame
+end

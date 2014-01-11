@@ -12,16 +12,14 @@ function scenario_start()
 	for _, unit in ipairs(recall_units) do
 		helper.place_unit_nearby(unit, leader.x, leader.y)
 	end
-
-	-- See what enemy units there might be
-	local enemy_recruits = battle_handler.get_unit_types()
-
+	
 	-- Create enemy units from given types
 	local enemy_leader = wesnoth.get_units({side = 2, canrecruit = "yes"})[1]
-	for i = 1,savegame.battle_data.number_enemies do
-		local recruit_type = enemy_recruits[helper.random(1, #enemy_recruits)]
-		local enemy_unit = wesnoth.create_unit { type = recruit_type, side = 2, random_traits = yes }
+	wesnoth.message(savegame.battle_data.army)
+	local army = savegame.armies[savegame.battle_data.army]
+	for i, unit_id in ipairs(army.units) do
 		local x, y = enemy_leader.x, enemy_leader.y
+		local enemy_unit = wesnoth.get_recall_units({ id = unit_id })[1]
 		
 		-- First iteration is to create the leader
 		if i == 1 then

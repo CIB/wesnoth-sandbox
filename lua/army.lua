@@ -19,7 +19,7 @@ function create_army(name, leader, behavior)
 	}
 	local npc = unique_npcs[rval.leader]
 	rval.overmap_unit_id = helper.create_stored_unit { id = rval.id, name = name, type = npc.type }
-	savegame.armies[savegame.army_ID] = rval
+	savegame.armies["army_" .. savegame.army_ID] = rval
 	return rval	
 end
 
@@ -81,6 +81,17 @@ function army_behaviors.bandits(army, turns)
 	end
 end
 
+
+function populate_army(army, recruits, amount)
+	-- Create units from given types
+	local enemy_leader = wesnoth.get_units({side = 2, canrecruit = "yes"})[1]
+	for i = 1,amount do
+		local recruit_type = recruits[helper.random(1, #recruits)]
+		local unit_id = helper.create_stored_unit { type = recruit_type, side = 2, random_traits = yes }
+		table.insert(army.units, unit_id)
+	end
+end
+
 function army_attack()
 	local army_at_location
 	for i, army in pairs(savegame.armies) do
@@ -89,7 +100,7 @@ function army_attack()
 		end
 	end
 	
-	start_bandit_battle(V.x1, V.y1)
+	start_battle(army_at_location.id, "default", get_battle_map(V.x1, V.y1))
 end
 
 function add_army_attack_button()
