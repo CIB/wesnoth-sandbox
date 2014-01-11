@@ -7,6 +7,7 @@ wesnoth.dofile "~add-ons/Sandbox/lua/location.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/town.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/battle_handlers.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/terrain.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/army.lua"
 
 
 -- updates all the overmap labels
@@ -71,8 +72,9 @@ end
 
 -- generic movement handler
 function player_moved(x1, y1)
-	local unit = helper.create_stored_unit { type = "Peasant", side = 2, random_traits = yes }
-	--helper.unstore_unit_by_id(unit.__cfg.store_index)
+	local leader = create_unique_NPC("Elvish Sylph", "Drun", "Humans", nil, create_human_citizen_personality(), 2)
+	local army = create_army("Sylph Army", leader)
+	army_place_on_map(army, 10, 10)
 
 	local max_moves = wesnoth.get_variable("unit.max_moves")
 	local tiles_moved = max_moves - wesnoth.get_variable("unit.moves")
