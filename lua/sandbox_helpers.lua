@@ -42,6 +42,8 @@ end
 
 -- quit the scenario, mostly used for ending the overmap scenario quickly
 function helper.quitlevel(next_scenario)
+	wesnoth.fire("clear_menu_item", { id = "army_attack_button" })
+	
 	local tags = { result = "victory", bonus = "no", carryover_report = "no", carryover_percentage = 100, next_scenario = next_scenario }
 	W.endlevel(tags)
 end
@@ -119,7 +121,7 @@ function helper.create_stored_unit(unit_table)
 	local unit = wesnoth.create_unit(unit_table)
 	wesnoth.put_recall_unit(unit, recall_slave_side)
 	savegame.lastUnitIndex = lastIndex + 1
-	return unit.id
+	return unit.id, unit
 end
 
 function helper.unstore_unit(id, x, y, side)

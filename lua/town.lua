@@ -1,5 +1,26 @@
 -- manage towns
 
+function create_human_npc_function(town)
+	return function(recruit_type)
+		return create_unique_NPC(recruit_type, nil, town.faction, town, create_human_citizen_personality())
+	end
+end
+
+function populate_town(town)
+	local leader = create_unique_NPC("Peasant", nil, "Humans", nil, create_human_citizen_personality(), 2)
+	local army = create_army("Town Populace", leader, nil)
+	populate_army(army, town.possible_recruits, 5, create_human_npc_function(town))
+	town.army = army.id
+	
+	local civilians = create_army("Town Populace", nil, nil)
+	populate_army(civilians, town.civilian_types, 10, create_human_npc_function(town))
+	town.civilians = civilians.id
+	
+	local recruits = create_army("Recruits", nil, nil)
+	populate_army(recruits, town.possible_recruits, 2, create_human_npc_function(town))
+	town.recruits = recruits.id
+end
+
 function generate_human_town(name, x, y)
 	local rval = { 
 		x = x, y = y,
@@ -37,20 +58,17 @@ function generate_human_town(name, x, y)
 				{ x = 11, y = 9 },
 				{ x = 9, y = 10 }
 			},
+			recruits = {
+				{ x = 5, y = 11 },
+				{ x = 7, y = 11 }
+			},
 			nobles = {
 				{ x = 17, y = 9}
 			}
 		}
 	}
 	
-	local leader = create_unique_NPC("Peasant", nil, "Humans", nil, create_human_citizen_personality(), 2)
-	local army = create_army("Town Populace", leader, nil)
-	populate_army(army, rval.possible_recruits, 5)
-	rval.army = army.id
-	
-	local civilians = create_army("Town Populace", nil, nil)
-	populate_army(civilians, rval.civilian_types, 10)
-	rval.civilians = civilians.id
+	populate_town(rval)
 	
 	return rval
 end
@@ -60,22 +78,50 @@ function generate_human_city(name, x, y)
 		x = x, y = y,
 		name = name,
 		resources = {
-			Gold = helper.random(500, 1000),
-			Crops = 0
+			Gold = helper.random(100, 1000),
+			Crops = helper.random(200, 1000)
 		},
-		population = helper.random(500, 1000),
+		population = helper.random(100, 1000),
 		possible_recruits = {
 			"Peasant", "Spearman", "Bowman", "Mage", "Fencer", "Horseman", "Heavy Infantryman", "Cavalryman"
 		},
+		civilian_types = {
+			"Peasant"
+		},
 		production = {
+			Crops = 0,
+			Gold = 1000
 		},
 		npcs = {},
 		recruits = nil,
-		guards = 20,
+		guards = 5,
 		faction = "Humans",
-		type = "Human Town",
-		location_type = "town"
+		type = "Human City",
+		location_type = "town",
+		unit_positions = {
+			guards = {
+				{ x = 7, y = 14 },
+				{ x = 5, y = 13 },
+				{ x = 5, y = 9  },
+				{ x = 7, y = 9  }
+			},
+			civilians = {
+				{ x = 8, y = 12 },
+				{ x = 14, y = 12 },
+				{ x = 11, y = 9 },
+				{ x = 9, y = 10 }
+			},
+			recruits = {
+				{ x = 5, y = 11 },
+				{ x = 7, y = 11 }
+			},
+			nobles = {
+				{ x = 17, y = 9}
+			}
+		}
 	}
+	
+	populate_town(rval)
 	
 	return rval
 end

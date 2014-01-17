@@ -84,12 +84,17 @@ function army_behaviors.bandits(army, turns)
 end
 
 
-function populate_army(army, recruits, amount)
+function populate_army(army, recruits, amount, npc_generator)
 	-- Create units from given types
 	local enemy_leader = wesnoth.get_units({side = 2, canrecruit = "yes"})[1]
 	for i = 1,amount do
 		local recruit_type = recruits[helper.random(1, #recruits)]
-		local unit_id = helper.create_stored_unit { type = recruit_type, side = 2, random_traits = yes }
+		local unit_id, unit
+		if npc_generator then
+			unit_id, unit = npc_generator(recruit_type)
+		else
+			unit_id, unit = helper.create_stored_unit { type = recruit_type, side = 2, random_traits = yes }
+		end
 		table.insert(army.units, unit_id)
 	end
 end

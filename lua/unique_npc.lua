@@ -8,55 +8,41 @@ wesnoth.dofile "~add-ons/Sandbox/lua/personality.lua"
 unique_npcs = { }
 
 -- create a unique NPC
--- returns the name of the new NPC, or nil if name
--- was given and an NPC with that name already existed
+-- returns the id of the new NPC
 function create_unique_NPC(type, name, faction, location, personality, side)
 	side = side or 2
 	
-	-- TODO: if we're to generate the name, make sure it's unique
-	local unit = wesnoth.create_unit { type = type, side = side, placement = "recall", random_traits = true }
+	local stored_unit_id, stored_unit = helper.create_stored_unit { name = name, type = type, random_traits = true }
 	
 	if not name then
-		name = unit.name
-	else
-		unit.name = name
+		name = stored_unit.name
 	end
 	
-	-- don't need the unit handle for now anymore, put it away
-	if side == 1 then
-		wesnoth.put_recall_unit(unit)
-	else
-		wesnoth.extract_unit(unit)
-	end
-		
-	
-	name = tostring(name)
-	
-	unique_npcs[name] = {
-		name = name,
+	unique_npcs[stored_unit_id] = {
 		type = type,
 		faction = faction,
 		-- each unique NPC can hold up to one quest
 		quest = nil,
 		location = location,
-		personality = personality
+		personality = personality,
+		id = stored_unit_id
 	}
 	
-	return name
+	return stored_unit_id, stored_unit
 end
 
 -- unstores a unique NPC of the given name and returns the unit handle
 -- unit will be placed on recall list of given side
-function get_unique_NPC(name, side)
-	if side == nil then side = 2 end
-	local npc = unique_npcs[name]
-	return wesnoth.create_unit { type = npc.type, side = side, placement = "recall" }
+function get_unique_NPC(id)
+	local rval = wesnoth.get_recall_units({ id = id })[1]
+	if not rval then
+		return wesnoth.get_units({ id = id })[1]
+	end
 end
 
 -- get the portrait image of a unique NPC
-function get_unit_portrait(name)
-	local unit = get_unique_NPC(name)
-	wesnoth.extract_unit(unit)
+function get_unit_portrait(id)
+	local unit = get_unique_NPC(id)
 	
 	local unit_type = wesnoth.unit_types[unit.type]
 	if unit_type.__cfg.portrait then
@@ -67,9 +53,9 @@ function get_unit_portrait(name)
 end
 
 -- get the name of an NPC, complete with role and all
-function get_npc_name(name)
-	local npc = unique_npcs[name]
-	return npc.name
+function get_npc_name(id)
+	local unit_handle = get_unique_NPC(id)
+	return unit_handle.name
 end
 
 -- add a new quest to a unique NPC
@@ -100,13 +86,13 @@ function npc_talk(npc)
 	elseif npc.quest and npc.quest.taken and npc.quest.completed then
 		-- player has taken quest from NPC
 		local msg = get_message(npc.personality, npc.quest.completion_text) .. " " .. get_message(npc.personality, sayings.normal_quest_reward)
-		helper.dialog(msg, get_npc_name(npc.name), get_unit_portrait(npc.name))
+		helper.dialog(msg, get_npc_name(npc.id), get_unit_portrait(npc.id))
 		player_adjust_resources(player, { Gold = helper.random(20, 50), Crops = helper.random(10, 30)} )
 		remove_quest(npc.quest)
 		npc.quest = nil
 	else
 		-- smalltalk
 		local msg = get_message(npc.personality, sayings.smalltalk)
-		helper.dialog(msg, get_npc_name(npc.name), get_unit_portrait(npc.name))
+		helper.dialog(msg, get_npc_name(npc.id), get_unit_portrait(npc.id))
 	end
 end
