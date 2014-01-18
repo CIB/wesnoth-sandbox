@@ -71,8 +71,8 @@ function helper.pick(t)
 end
 
 -- simple dialog with text and no options
-function helper.dialog(msg, caption, image)
-	helper.get_user_choice({ speaker = "narrator", message = msg, image = image, caption = caption }, { })
+function helper.dialog(msg, caption, image, choices)
+	return helper.get_user_choice({ speaker = "narrator", message = msg, image = image, caption = caption }, choices or { })
 end
 
 -- add a menu item

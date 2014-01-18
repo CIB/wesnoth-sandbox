@@ -9,9 +9,7 @@ unique_npcs = { }
 
 -- create a unique NPC
 -- returns the id of the new NPC
-function create_unique_NPC(type, name, faction, location, personality, side)
-	side = side or 2
-	
+function create_unique_NPC(type, name, faction, location, personality, recruitable)
 	local stored_unit_id, stored_unit = helper.create_stored_unit { name = name, type = type, random_traits = true }
 	
 	if not name then
@@ -25,7 +23,8 @@ function create_unique_NPC(type, name, faction, location, personality, side)
 		quest = nil,
 		location = location,
 		personality = personality,
-		id = stored_unit_id
+		id = stored_unit_id,
+		recruitable = recruitable
 	}
 	
 	return stored_unit_id, stored_unit
@@ -67,6 +66,33 @@ end
 
 -- talk to an NPC
 function npc_talk(npc)
+	local npc_name = get_npc_name(npc.id)
+	local npc_portrait = get_unit_portrait(npc.id)
+	
+	-- maybe we can recruit this guy?
+	if npc.recruitable then
+		local more_units = get_maximum_recruits(player) - #wesnoth.get_recall_units({side = 1})
+		
+		local recruited = get_unique_NPC(npc.id)
+		S.name = tostring(npc_name)
+		S.type = tostring(wesnoth.unit_types[recruited.type].name)
+		S.gold = wesnoth.unit_types[recruited.type].cost
+		local reply = helper.dialog(_ "Hire {name}, the {type} for {gold} gold?", npc_name, npc_portrait, {"Yes", "No"})
+		if reply == 1 then
+			local cost = wesnoth.unit_types[recruited.type].cost
+			
+			if cost > helper.get_gold(1) then
+				helper.get_user_choice({ speaker = "narrator", message = "You can't afford that." }, { })
+			elseif more_units <= 0 then
+				helper.dialog("You can't recruit any more units!")
+			else
+				wesnoth.put_recall_unit(recruited, 1)
+			end
+		end
+		
+		return
+	end
+
 	if npc.quest and not npc.quest.taken then		
 		-- offer new quest
 		local choices = { _ "I'll do it", _ "No" }
@@ -86,13 +112,13 @@ function npc_talk(npc)
 	elseif npc.quest and npc.quest.taken and npc.quest.completed then
 		-- player has taken quest from NPC
 		local msg = get_message(npc.personality, npc.quest.completion_text) .. " " .. get_message(npc.personality, sayings.normal_quest_reward)
-		helper.dialog(msg, get_npc_name(npc.id), get_unit_portrait(npc.id))
+		helper.dialog(msg, npc_name, npc_portrait)
 		player_adjust_resources(player, { Gold = helper.random(20, 50), Crops = helper.random(10, 30)} )
 		remove_quest(npc.quest)
 		npc.quest = nil
 	else
 		-- smalltalk
 		local msg = get_message(npc.personality, sayings.smalltalk)
-		helper.dialog(msg, get_npc_name(npc.id), get_unit_portrait(npc.id))
+		helper.dialog(msg, npc_name, npc_portrait)
 	end
 end

@@ -27,6 +27,16 @@ function scenario_start()
 		end
 	end
 	
+
+	local recruits = savegame.armies[location.recruits]
+	if positions.recruits then
+		for i=1,math.min(#positions.recruits, #recruits.units) do
+			local position = positions.recruits[i]
+			local unit_id = recruits.units[i]
+			local recruit_unit = helper.unstore_unit(unit_id, position.x, position.y, 2)
+		end
+	end
+	
 	-- put some recruits on the map
 	
 	

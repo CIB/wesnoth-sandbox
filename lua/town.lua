@@ -1,8 +1,8 @@
 -- manage towns
 
-function create_human_npc_function(town)
+function create_human_npc_function(town, recruitable)
 	return function(recruit_type)
-		return create_unique_NPC(recruit_type, nil, town.faction, town, create_human_citizen_personality())
+		return create_unique_NPC(recruit_type, nil, town.faction, town, create_human_citizen_personality(), recruitable)
 	end
 end
 
@@ -17,7 +17,7 @@ function populate_town(town)
 	town.civilians = civilians.id
 	
 	local recruits = create_army("Recruits", nil, nil)
-	populate_army(recruits, town.possible_recruits, 2, create_human_npc_function(town))
+	populate_army(recruits, town.possible_recruits, 2, create_human_npc_function(town, true))
 	town.recruits = recruits.id
 end
 
@@ -149,9 +149,6 @@ end
 
 
 function on_month_passed.town(town)
-	-- reset recruits
-	town.recruits = nil
-	
 	-- trade and production
 	for resource, amount in pairs(town.resources) do
 		if resource ~= "Gold" then
