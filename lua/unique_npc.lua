@@ -88,6 +88,8 @@ function npc_talk(npc)
 			else
 				recruited.side = 1
 				wesnoth.put_recall_unit(recruited, 1)
+				local army = savegame.armies[recruited.variables.army]
+				army_remove_unit(army, recruited.id)
 			end
 		end
 		

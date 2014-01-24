@@ -5,6 +5,7 @@ wesnoth.dofile "~add-ons/Sandbox/lua/battle_handlers.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/location.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/town.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/unique_npc.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/army.lua"
 
 function scenario_start()
 	-- man the guard posts(if any)
@@ -92,6 +93,7 @@ function player_moved(x, y)
 	leader.moves = leader.max_moves
 	
 	if x == 1 or y == 1 then
+		save_player()
 		helper.quitlevel("overmap")
 	end
 end

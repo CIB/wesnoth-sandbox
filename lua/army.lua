@@ -50,9 +50,9 @@ function army_move_toward(army, army_unit, x, y, turns)
 end
 
 function army_remove_unit(army, id)
-	for i, unit in army.units do
-		if unit.id == id then
-			table.remove(army, i)
+	for i, unit in ipairs(army.units) do
+		if unit == id then
+			table.remove(army.units, i)
 		end
 	end
 end
@@ -104,6 +104,7 @@ function populate_army(army, recruits, amount, npc_generator)
 			unit_id, unit = helper.create_stored_unit { type = recruit_type, side = 2, random_traits = yes }
 		end
 		table.insert(army.units, unit_id)
+		unit.variables.army = army.id
 	end
 end
 
