@@ -86,7 +86,7 @@ end
 
 -- get the leader of a side
 function helper.get_leader(side)
-	return wesnoth.get_units({side = side, canrecruit = "yes"})[1]
+	return wesnoth.get_units({side = side, canrecruit = true})[1]
 end
 
 -- remove value from table

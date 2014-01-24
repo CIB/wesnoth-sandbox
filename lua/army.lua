@@ -49,6 +49,14 @@ function army_move_toward(army, army_unit, x, y, turns)
 	return true
 end
 
+function army_remove_unit(army, id)
+	for i, unit in army.units do
+		if unit.id == id then
+			table.remove(army, i)
+		end
+	end
+end
+
 -- get the unit representing the army on the overmap, if any
 function get_army_unit(army)
 	return wesnoth.get_units({id = army.id})[1]

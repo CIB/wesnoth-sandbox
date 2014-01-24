@@ -90,6 +90,10 @@ end
 function player_moved(x, y)
 	local leader = wesnoth.get_units { side = 1, canrecruit = true}[1]
 	leader.moves = leader.max_moves
+	
+	if x == 1 or y == 1 then
+		helper.quitlevel("overmap")
+	end
 end
 
 function explore_talk()

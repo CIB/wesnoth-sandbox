@@ -86,6 +86,7 @@ function npc_talk(npc)
 			elseif more_units <= 0 then
 				helper.dialog("You can't recruit any more units!")
 			else
+				recruited.side = 1
 				wesnoth.put_recall_unit(recruited, 1)
 			end
 		end

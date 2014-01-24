@@ -310,134 +310,28 @@ function town_sell(town)
 	end
 end
 
--- dialog to recruit units at a town
-function town_recruit(town)
-	while true do
-		if town.recruits == nil then
-			-- generate some shiny recruits
-			town.recruits = {}
-			for i=1,3 do
-				local unit_type = town.possible_recruits[helper.random(1, #town.possible_recruits)]
-				local unit = wesnoth.create_unit { type = unit_type, side = 2, placement = "recall", random_traits = yes }
-				town.recruits[i] = { unit_type = unit_type, name = tostring(unit.name) }
-			end
-		end
-		
-		local choices = { }
-		local choice_values = { }
-		for i, recruit in ipairs(town.recruits) do
-			local unit_type = wesnoth.unit_types[recruit.unit_type]
-			choices[i] = "Recruit " .. recruit.name .. " the " .. unit_type.name .. " for " .. unit_type.cost .. " gold pieces."
-			choice_values[i] = recruit
-		end
-		choices[#choices + 1] = "Done"
-		
-		S.gold = helper.get_gold(1)
-		S.units = #wesnoth.get_recall_units({side = 1})
-		S.more_units = get_maximum_recruits(player) - S.units
-		
-		local message = _ "Whom do you wish to recruit?\n"
-		message = message .. _ "You have {gold} gold left.\n"
-		if S.more_units > 0 then
-			message = message .. _ "You have {units} units in your company and can recruit {more_units} more.\n"
-		else
-			message = message .. _ "You have {units} units in your company, but you can't recruit any more."
-		end
-			
-		user_choice = helper.get_user_choice({ speaker = "narrator", message = message}, choices)
-		local recruited = choice_values[user_choice]
-		
-		if recruited then
-			local cost = wesnoth.unit_types[recruited.unit_type].cost
-			
-			if cost > helper.get_gold(1) then
-				helper.get_user_choice({ speaker = "narrator", message = "You can't afford that." }, { })
-			elseif S.more_units <= 0 then
-				helper.dialog("You can't recruit any more units!")
-			else
-				helper.remove(town.recruits, recruited)
-				local recruited_unit_name = create_unique_NPC(recruited.unit_type, recruited.name, "player", nil, create_human_citizen_personality(), 1)
-				local npc = unique_npcs[recruited_unit_name]
-				helper.add_gold(1, - cost)
-				S.name = recruited.name; S.unit_type = recruited.unit_type; S.cost = cost
-				wesnoth.message( _ "You recruited {name}, the {unit_type} for {cost} gold!" )
-				local msg = get_message(npc.personality, sayings.join_player)
-				helper.dialog(msg, get_npc_name(npc.name), get_unit_portrait(npc.name))
-			end
-		else
-			break
-		end
+function show_town_info(town)
+	S.town_name = town.name
+	S.relation = get_faction_relation(player, town.faction)
+	S.population = town.population
+	S.faction = town.faction
+	local message = _ "You enter {town_name}, a village of {faction}.\n";
+	message = message .. _ "Population: {population}\n"
+	message = message .. _ "Relation: {relation}\n"
+	message = message .. _ "Town Resources: \n"
+	
+	for resource_name, amount in pairs(town.resources) do
+		S.resource_name = resource_name; S.amount = amount
+		message = message .. _ "\t{resource_name}\t\t{amount}\n"
 	end
-end
-
--- talk to NPC's in the town
-function town_talk(town)
-	while true do
-		if #town.npcs == 0 then
-			helper.dialog("There's nobody to talk to..")
-			return
-		end
-		
-		local choices = {}
-		local choice_values = {}
-		local i = 1
-		for k, name in ipairs(town.npcs) do
-			local npc = unique_npcs[name]
-			choices[i] = name
-			choice_values[i] = npc
-			i = i + 1
-		end
-		
-		choices[#choices+1] = "Done"
-		
-		local npc = choice_values[1]
-		if not npc then
-			break
-		end
-		
-		npc_talk(npc)
-		return
-	end
+	
+	helper.get_user_choice { speaker = "narrator", message = message}
 end
 
 -- main town dialog, called when moving on the town's tile
 function on_move.town(found_town)
 	if found_town then
-		local user_choice = nil
-		while user_choice ~= "Done" do
-			S.town_name = found_town.name
-			S.relation = get_faction_relation(player, found_town.faction)
-			S.population = found_town.population
-			S.faction = found_town.faction
-			local message = _ "You enter {town_name}, a village of {faction}.\n";
-			message = message .. _ "Population: {population}\n"
-			message = message .. _ "Relation: {relation}\n"
-			message = message .. _ "Town Resources: \n"
-			
-			for resource_name, amount in pairs(found_town.resources) do
-				S.resource_name = resource_name; S.amount = amount
-				message = message .. _ "\t{resource_name}\t\t{amount}\n"
-			end
-			
-			local choices = { _ "Buy Resources", _ "Sell Resources", _ "Tavern", _ "Talk", _ "Attack", _ "Enter", _ "Done" }
-			user_choice = choices[helper.get_user_choice({ speaker = "narrator", message = message}, choices)]
-			
-			if user_choice == _ "Buy Resources" then
-				town_buy(found_town)
-			elseif user_choice == _ "Sell Resources" then
-				town_sell(found_town)
-			elseif user_choice == _ "Tavern" then
-				town_recruit(found_town)
-			elseif user_choice == _ "Attack" then
-				start_town_battle(found_town)
-				return
-			elseif user_choice == _ "Talk" then
-				town_talk(found_town)
-			elseif user_choice == _ "Enter" then
-				town_enter(found_town)
-				return
-			end
-		end
+		town_enter(found_town)
 	end
 end
 
