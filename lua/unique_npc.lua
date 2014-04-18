@@ -9,8 +9,8 @@ unique_npcs = { }
 
 -- create a unique NPC
 -- returns the id of the new NPC
-function create_unique_NPC(type, name, faction, location, personality, recruitable)
-	local stored_unit_id, stored_unit = helper.create_stored_unit { name = name, type = type, random_traits = true }
+function create_unique_NPC(type, name, faction, location, personality, recruitable, canrecruit)
+	local stored_unit_id, stored_unit = helper.create_stored_unit { name = name, type = type, random_traits = true, canrecruit = canrecruit }
 	
 	if not name then
 		name = stored_unit.name
@@ -43,12 +43,7 @@ end
 function get_unit_portrait(id)
 	local unit = get_unique_NPC(id)
 	
-	local unit_type = wesnoth.unit_types[unit.type]
-	if unit_type.__cfg.portrait then
-		return unit_type.__cfg.portrait.image
-	else
-		return unit_type.__cfg.image
-	end
+	return helper.get_portrait(unit)
 end
 
 -- get the name of an NPC, complete with role and all
@@ -68,6 +63,10 @@ end
 function npc_talk(npc)
 	local npc_name = get_npc_name(npc.id)
 	local npc_portrait = get_unit_portrait(npc.id)
+	
+	if npc.custom_talk then
+		_G[npc.custom_talk](npc, npc_name, npc_portrait)
+	end
 	
 	-- maybe we can recruit this guy?
 	if npc.recruitable then
@@ -101,16 +100,16 @@ function npc_talk(npc)
 		local choices = { _ "I'll do it", _ "No" }
 		local choice_values = { true, false }
 		local tags = { speaker = "narrator", 
-			caption = get_npc_name(npc.name), 
-			image = get_unit_portrait(npc.name), 
+			caption = npc_name, 
+			image = npc_portrait, 
 			message = get_message(npc.personality, npc.quest.mission_text) 
 		}
 		local user_choice = choice_values[helper.get_user_choice(tags, choices)]
 		if user_choice == true then
-			helper.dialog("Thank you. Your help will be appreciated.", get_npc_name(npc.name), get_unit_portrait(npc.name))
+			helper.dialog("Thank you. Your help will be appreciated.", npc_name, npc_portrait)
 			add_quest(npc.quest)
 		else
-			helper.dialog("Oh, that's too bad..", get_npc_name(npc.name), get_unit_portrait(npc.name))
+			helper.dialog("Oh, that's too bad..", npc_name, npc_portrait)
 		end
 	elseif npc.quest and npc.quest.taken and npc.quest.completed then
 		-- player has taken quest from NPC

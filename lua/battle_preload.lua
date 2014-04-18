@@ -4,6 +4,26 @@ wesnoth.dofile "~add-ons/Sandbox/lua/quest.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/battle_handlers.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/location.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/town.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/army.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/rpg_advancement.lua"
+
+function place_army(army_id, side, x, y)
+	local army = savegame.armies[army_id]
+	
+	-- place actual enemy leader
+	if army.leader then
+		local enemy_unit = wesnoth.get_recall_units({ id = army.leader })[1]
+		enemy_unit.side = side
+		helper.place_unit_nearby(enemy_unit, x, y)
+	end
+	
+	for i, unit_id in ipairs(army.units) do
+		local enemy_unit = wesnoth.get_recall_units({ id = unit_id })[1]
+		enemy_unit.side = side
+		
+		helper.place_unit_nearby(enemy_unit, x, y)
+	end
+end
 
 function scenario_start()
 	-- Load all the player's units.
@@ -13,21 +33,18 @@ function scenario_start()
 		helper.place_unit_nearby(unit, leader.x, leader.y)
 	end
 	
-	-- Create enemy units from given types
 	local enemy_leader = wesnoth.get_units({side = 2, canrecruit = true})[1]
 	local x, y = enemy_leader.x, enemy_leader.y
-	
-	-- Remove the enemy leader
 	wesnoth.extract_unit(enemy_leader)
+	if savegame.battle_data.army then
+		place_army(savegame.battle_data.army, 2, x, y)
+	end
 	
-	local army = savegame.armies[savegame.battle_data.army]
-	-- TODO: create the leader unit
-	for i, unit_id in ipairs(army.units) do
-		local enemy_unit = wesnoth.get_recall_units({ id = unit_id })[1]
-		enemy_unit.side = 2
-		
-		-- Following iterations are to create regular enemy units
-		helper.place_unit_nearby(enemy_unit, x, y)
+	local allied_leader = wesnoth.get_units({side = 3, canrecruit = true})[1]
+	x, y = allied_leader.x, allied_leader.y
+	wesnoth.extract_unit(allied_leader)
+	if savegame.battle_data.allied_army then
+		place_army(savegame.battle_data.allied_army, 3, x, y)
 	end
 	
 	for key, quest in ipairs(savegame.quests) do
@@ -50,6 +67,9 @@ function on_victory()
 	for key, quest in ipairs(savegame.quests) do
 		quest_handle_victory(quest, savegame.battle_data)
 	end
+	
+	-- kill the army we just defeated
+	kill_army(savegame.battle_data.army)
 	
 	save_player()
 end

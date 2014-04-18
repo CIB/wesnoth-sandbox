@@ -134,3 +134,12 @@ end
 function helper.store_unit(unit)
 	wesnoth.put_recall_unit(unit, recall_slave_side)
 end
+
+function helper.get_portrait(unit)
+	local unit_type = wesnoth.unit_types[unit.type]
+	if unit_type.__cfg.portrait then
+		return unit_type.__cfg.portrait.image
+	else
+		return unit_type.__cfg.image
+	end
+end

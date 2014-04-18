@@ -9,16 +9,24 @@ end
 function populate_town(town)
 	local leader = create_unique_NPC("Peasant", nil, "Humans", nil, create_human_citizen_personality(), 2)
 	local army = create_army("Town Populace", leader, nil)
-	populate_army(army, town.possible_recruits, 5, create_human_npc_function(town))
+	populate_army(army, town.possible_recruits, town.guards, create_human_npc_function(town))
 	town.army = army.id
 	
 	local civilians = create_army("Town Populace", nil, nil)
-	populate_army(civilians, town.civilian_types, 10, create_human_npc_function(town))
+	populate_army(civilians, town.civilian_types, #town.unit_positions.civilians, create_human_npc_function(town))
 	town.civilians = civilians.id
 	
 	local recruits = create_army("Recruits", nil, nil)
-	populate_army(recruits, town.possible_recruits, 2, create_human_npc_function(town, true))
+	populate_army(recruits, town.possible_recruits, #town.unit_positions.recruits, create_human_npc_function(town, true))
 	town.recruits = recruits.id
+	
+	-- temporary for testing
+	if helper.random(1, 10) == 1 then
+		local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), false, true)
+		local army = create_army("Bandits", leader, "bandits")
+		populate_army(army, {"Footpad", "Thug", "Thief"}, math.random(2, 6))
+		town.bandit_occupation = army.id
+	end
 end
 
 function generate_human_town(name, x, y)
@@ -44,6 +52,8 @@ function generate_human_town(name, x, y)
 		guards = 5,
 		faction = "Humans",
 		type = "Human Town",
+		explore_scenario = "town_explore",
+		battle_scenario = "town",
 		location_type = "town",
 		unit_positions = {
 			guards = {
@@ -94,26 +104,33 @@ function generate_human_city(name, x, y)
 		},
 		npcs = {},
 		recruits = nil,
-		guards = 5,
+		guards = 8,
 		faction = "Humans",
 		type = "Human City",
+		explore_scenario = "human_city_explore",
+		battle_scenario = "human_city",
 		location_type = "town",
 		unit_positions = {
 			guards = {
-				{ x = 7, y = 14 },
-				{ x = 5, y = 13 },
-				{ x = 5, y = 9  },
-				{ x = 7, y = 9  }
+				{ x = 7, y = 25 },
+				{ x = 10, y = 24 },
+				{ x = 4, y = 15  },
+				{ x = 4, y = 12  },
+				{ x = 22, y = 12  },
+				{ x = 22, y = 16  },
+				{ x = 22, y = 19  }
 			},
 			civilians = {
-				{ x = 8, y = 12 },
-				{ x = 14, y = 12 },
-				{ x = 11, y = 9 },
-				{ x = 9, y = 10 }
+				{ x = 10, y = 12 },
+				{ x = 9, y = 19 },
+				{ x = 16, y = 19 },
+				{ x = 9, y = 18 },
+				{ x = 12, y = 12 }
 			},
 			recruits = {
-				{ x = 5, y = 11 },
-				{ x = 7, y = 11 }
+				{ x = 8, y = 8 },
+				{ x = 6, y = 10 },
+				{ x = 6, y = 7 }
 			},
 			nobles = {
 				{ x = 17, y = 9}
@@ -177,13 +194,24 @@ function on_month_passed.town(town)
 	
 	-- NPC's coming and going
 	if #town.npcs == 0 then
-		local npc_type = town.possible_recruits[math.random(1, #town.possible_recruits)]
-		local new_npc = create_unique_NPC(npc_type, nil, town.faction, town, create_human_citizen_personality())
-		local bandit_quest =  generate_bandit_quest(new_npc)
-		if bandit_quest then
-			add_quest_to_npc(new_npc, bandit_quest)
+		-- create a unique quest giver NPC
+		local quest_giver_id, quest_giver = create_unique_NPC("Javelineer", nil, town.faction, town, create_human_citizen_personality(), false)
+		
+		if helper.random(1, 2) == 1 then
+			local bandit_quest = generate_bandit_quest(quest_giver_id)
+			
+			if bandit_quest then
+				add_quest_to_npc(quest_giver_id, bandit_quest)
+			end
+		else			
+			local orc_quest = create_orc_invasion_quest(28, 18, nil, quest_giver_id)
+			
+			if orc_quest then
+				add_quest_to_npc(quest_giver_id, orc_quest)
+			end
 		end
-		table.insert(town.npcs, new_npc)
+			
+		table.insert(town.npcs, quest_giver_id)
 	end
 end
 
@@ -328,9 +356,33 @@ function show_town_info(town)
 	helper.get_user_choice { speaker = "narrator", message = message}
 end
 
+function town_attack(town, army)
+	-- prepare for a battle
+	battle_data = {}
+	battle_data.location = town
+	battle_data.army = army
+	battle_data.battle_handler = "default"
+	save_overworld()
+	
+	helper.quitlevel(town.battle_scenario)
+	return true
+end
+
 -- main town dialog, called when moving on the town's tile
 function on_move.town(found_town)
 	if found_town then
+		if found_town.bandit_occupation then
+			local choices = { _ "Drive out the bandits", _ "Leave" }
+			local choice_values = { true, false }
+			local tags = { speaker = "narrator", 
+				message = "This town is occupied by bandits. Drive them out?"
+			}
+			local user_choice = choice_values[helper.get_user_choice(tags, choices)]
+			if user_choice == true then
+				town_attack(found_town, found_town.bandit_occupation)
+			end
+		end
+		
 		town_enter(found_town)
 	end
 end

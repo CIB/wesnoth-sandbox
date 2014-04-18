@@ -38,6 +38,15 @@ function scenario_start()
 		end
 	end
 	
+	local npcs = location.npcs
+	if positions.nobles then
+		for i=1,math.min(#positions.nobles, #npcs) do
+			local position = positions.nobles[i]
+			local unit_id = npcs[i]
+			local npc_unit = helper.unstore_unit(unit_id, position.x, position.y, 2)
+		end
+	end
+	
 	-- put some recruits on the map
 	
 	

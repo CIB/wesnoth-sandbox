@@ -25,6 +25,11 @@ function create_army(name, leader, behavior)
 	return rval	
 end
 
+function kill_army(id)
+	savegame.armies[id] = nil
+	-- TODO: kill the individual units in the army
+end
+
 function army_place_on_map(army, x, y)
 	army.position = {x = x, y = y}
 	return helper.unstore_unit(army.overmap_unit_id, x, y, 2)

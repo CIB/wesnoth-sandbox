@@ -8,6 +8,7 @@ wesnoth.dofile "~add-ons/Sandbox/lua/town.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/battle_handlers.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/terrain.lua"
 wesnoth.dofile "~add-ons/Sandbox/lua/army.lua"
+wesnoth.dofile "~add-ons/Sandbox/lua/rpg_advancement.lua"
 
 
 -- updates all the overmap labels
@@ -22,7 +23,7 @@ function update_labels()
 	end
 	
 	-- draw all quest labels(high priority)
-	for key, quest in ipairs(quests) do
+	for key, quest in ipairs(savegame.quests) do
 		if not quest.completed then
 			quest_handle_map(quest)
 		end
@@ -32,29 +33,6 @@ end
 -- calculates how much a resource is worth in a given town
 function get_resource_value(town, resource)
 	return 1
-end
-
--- start a battle with bandits, moving on to the next map
-function start_bandit_battle(x, y)
-	battle_data = {}
-	battle_data.battle_handler = "bandits"
-	battle_data.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 1)
-	if battle_data.number_enemies < 1 then battle_data.number_enemies = 1 end
-	save_overworld()
-	
-	helper.dialog("You're attacked by a brigade of bandits!")
-	helper.quitlevel(get_battle_map(x, y))
-end
-
-function start_elf_battle(x, y)
-	battle_data = {}
-	battle_data.battle_handler = "elves"
-	battle_data.number_enemies = #wesnoth.get_recall_units({side = 1}) + helper.random(-2, 0)
-	if battle_data.number_enemies < 1 then battle_data.number_enemies = 1 end
-	save_overworld()
-	
-	helper.dialog("You're attacked by a wandering group of elves.")
-	helper.quitlevel(get_battle_map(x, y))
 end
 
 -- start a battle with a town
@@ -70,7 +48,7 @@ end
 function town_enter(town)
 	savegame.explore_location = town
 	save_overworld()
-	helper.quitlevel("town_explore")
+	helper.quitlevel(town.explore_scenario)
 end
 
 function start_battle(army, battle_handler, next_map)
@@ -94,7 +72,7 @@ function player_moved(x1, y1)
 	]]
 	
 
-	for key, quest in ipairs(quests) do
+	for key, quest in ipairs(savegame.quests) do
 		-- If a battle started or the like, do not process anything else
 		if quest_handle_move(quest, V.x1, V.y1, movement_percentage) then
 			return
@@ -113,7 +91,7 @@ function player_moved(x1, y1)
 	
 	if leader.moves == 0 then
 		new_turn()
-		leader.moves = leader.max_moves
+		leader.moves = 6
 	end
 	
     --wesnoth.set_variable("unit.moves", wesnoth.get_variable("unit.max_moves"))
@@ -134,7 +112,6 @@ function save_overworld()
 	savegame.player.gold = helper.get_gold(1)
 	savegame.towns = towns
 	savegame.battle_data = battle_data
-	savegame.quests = quests
 	savegame.unique_npcs = unique_npcs
 	savegame.locations = locations
 	V.savegame = pickle(savegame)
@@ -145,6 +122,7 @@ function load_overworld()
 	-- if there's no savegame yet, abort
 	if type(V.savegame) ~= "string" or V.savegame == "" then
 		savegame = { }
+		savegame.quests = {}
 		generate_player()
 		generate_towns()
 		return
@@ -153,7 +131,6 @@ function load_overworld()
 	savegame = unpickle(V.savegame)
 	local leader = helper.get_leader(1)
 	towns = savegame.towns
-	quests = savegame.quests
 	locations = savegame.locations
 	unique_npcs = savegame.unique_npcs
 	
@@ -178,6 +155,9 @@ end
 function scenario_start()
 	save_overworld()
 	place_armies()
+	
+	local leader = wesnoth.get_units { side = 1, canrecruit = true }[1]
+	leader.moves = 6
 end
 
 function side_turn()
@@ -214,6 +194,11 @@ function new_turn()
 				army_behaviors[army.behavior](army, get_army_unit(army).moves)
 			end
 		end
+end
+
+function wesnoth.game_events.on_save()
+	save_overworld()
+	return nil
 end
 
 update_labels()

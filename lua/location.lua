@@ -32,7 +32,7 @@ on_month_passed = { }
 function on_month_passed.bandit_camp(location)
 	-- spawn a small bandit army every now and then
 	if math.random(0, 30) == 0 then
-		local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), 2)
+		local leader = create_unique_NPC("Thug", nil, "Bandits", nil, create_human_citizen_personality(), false, true)
 		local army = create_army("Bandits", leader, "bandits")
 		populate_army(army, {"Footpad", "Thug", "Thief"}, math.random(1, 4))
 		army.base = { x = location.x, y = location.y }
@@ -50,6 +50,7 @@ function on_move.bandit_camp(location)
 		battle_data.encounter_type = "Bandits"
 		battle_data.number_enemies = helper.random(5, 10)
 		battle_data.location = location
+		battle_data.army = location.army
 		battle_data.battle_handler = "bandits"
 		save_overworld()
 		
@@ -74,6 +75,11 @@ function create_bandit_camp(x, y)
 		x = x,
 		y = y,
 	}
+	
+	local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), 2)
+	local army = create_army("Bandits", leader, nil)
+	populate_army(army, {"Footpad", "Thug", "Thief"}, math.random(5, 12))
+	rval.army = army.id
 	
 	add_location(x, y, rval)
 	
