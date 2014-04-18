@@ -101,7 +101,8 @@ function player_moved(x, y)
 	local leader = wesnoth.get_units { side = 1, canrecruit = true}[1]
 	leader.moves = leader.max_moves
 	
-	if x == 1 or y == 1 then
+	local width,height,border = wesnoth.get_map_size()
+	if x == 1 or y == 1 or x == width or y == height then
 		save_player()
 		helper.quitlevel("overmap")
 	end

@@ -54,6 +54,10 @@ end
 
 -- handler called on all quests to update map meta-info
 function quest_handle_map(quest)
+	if quest.completed then
+		return
+	end
+	
 	if quest.type == "kill bandits" then
 		W.label({x=quest.target_x, y=quest.target_y, text="Quest: Destroy Bandit Camp", color="255,0,0"})
 	elseif quest.type == "orc invasion" then
@@ -69,6 +73,7 @@ function quest_handle_move(quest, x, y, movement_percentage)
 		battle_data.army = quest.army    
 		battle_data.allied_army = quest.allied_army
 		battle_data.battle_handler = "default"
+		battle_data.quest = quest
 		save_overworld()
 		
 		helper.quitlevel("forest")
@@ -82,7 +87,7 @@ end
 
 -- handler called when a battle starts
 function quest_handle_battle_start(quest, battle_data)
-	if 
+	--[[if 
 		quest.type == "kill bandits" 				and
 		battle_data.location 						and 
 		battle_data.location.x == quest.target_x 	and
@@ -90,14 +95,22 @@ function quest_handle_battle_start(quest, battle_data)
 		battle_data.location.location_type == "bandit_camp"
 	then
 		battle_data.quest = quest
+	end]]
+	
+	if quest.type == "orc invasion" then
+		-- get the leader of our allies
+		local allied_leader = wesnoth.get_units { side = 3, canrecruit = true }[1]
+		local enemy_leader = wesnoth.get_units { side = 2, canrecruit = true }[1]
+		
+		helper.get_user_choice({ speaker = allied_leader.id, message = "You shall go no further, foul creatures! We will end your menace right here." }, { })
+		helper.get_user_choice({ speaker = enemy_leader.id, message = "What's this, you hired some mercenaries, eh? We will roast you over a fire!" }, { })
+		helper.get_user_choice({ speaker = "narrator", message = "You wonder what you've gotten yourself into this time.." }, { })
 	end
 end
 
 -- handler called on all quests when the player wins a battle
 function quest_handle_victory(quest, battle_data)
-	local quest = battle_data.quest
-	
-	if quest and quest.type == "kill bandits" then
+	if quest and (quest.type == "kill bandits" or quest.type == "orc invasion") then
 		quest.completed = true
 	end
 end

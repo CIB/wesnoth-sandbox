@@ -19,14 +19,6 @@ function populate_town(town)
 	local recruits = create_army("Recruits", nil, nil)
 	populate_army(recruits, town.possible_recruits, #town.unit_positions.recruits, create_human_npc_function(town, true))
 	town.recruits = recruits.id
-	
-	-- temporary for testing
-	if helper.random(1, 10) == 1 then
-		local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), false, true)
-		local army = create_army("Bandits", leader, "bandits")
-		populate_army(army, {"Footpad", "Thug", "Thief"}, math.random(2, 6))
-		town.bandit_occupation = army.id
-	end
 end
 
 function generate_human_town(name, x, y)
@@ -213,6 +205,17 @@ function on_month_passed.town(town)
 			
 		table.insert(town.npcs, quest_giver_id)
 	end
+	
+
+	-- temporary for testing
+	if not town.bandit_occupation then
+		if helper.random(1, 10) == 1 then
+			local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), false, true)
+			local army = create_army("Bandits", leader, "bandits")
+			populate_army(army, {"Footpad", "Thug", "Thief"}, math.random(2, 6))
+			town.bandit_occupation = army.id
+		end
+	end
 end
 
 -- town interaction helpers
@@ -356,11 +359,12 @@ function show_town_info(town)
 	helper.get_user_choice { speaker = "narrator", message = message}
 end
 
-function town_attack(town, army)
+function town_attack(town, army, allied_army)
 	-- prepare for a battle
 	battle_data = {}
 	battle_data.location = town
 	battle_data.army = army
+	battle_data.allied_army = allied_army
 	battle_data.battle_handler = "default"
 	save_overworld()
 	
@@ -379,11 +383,22 @@ function on_move.town(found_town)
 			}
 			local user_choice = choice_values[helper.get_user_choice(tags, choices)]
 			if user_choice == true then
-				town_attack(found_town, found_town.bandit_occupation)
+				town_attack(found_town, found_town.bandit_occupation, found_town.army)
+			end
+		else
+			local choices = { _"Enter", _ "Attack Town", _ "Leave" }
+			local choice_values = { 1, 2, 3 }
+			local tags = { speaker = "narrator", 
+				message = "Attack or enter?"
+			}
+			
+			local user_choice = choice_values[helper.get_user_choice(tags, choices)]
+			if user_choice == 2 then
+				town_attack(found_town, found_town.army, nil)
+			elseif user_choice == 1 then
+				town_enter(found_town)
 			end
 		end
-		
-		town_enter(found_town)
 	end
 end
 

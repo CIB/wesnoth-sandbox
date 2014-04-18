@@ -1,7 +1,7 @@
 function post_advance()
 	local unit = wesnoth.get_units({x=V.x1,y=V.y1})[1]
 	if unit.side == 1 then
-		strengthen()
+		strengthen(unit)
 	end
 end
 

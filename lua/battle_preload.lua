@@ -47,8 +47,8 @@ function scenario_start()
 		place_army(savegame.battle_data.allied_army, 3, x, y)
 	end
 	
-	for key, quest in ipairs(savegame.quests) do
-		quest_handle_battle_start(quest, savegame.battle_data)
+	if savegame.battle_data.quest then
+		quest_handle_battle_start(savegame.battle_data.quest, savegame.battle_data)
 	end
 end
 
@@ -64,8 +64,8 @@ end
 function on_victory()
 	battle_handler.on_victory()
 	
-	for key, quest in ipairs(savegame.quests) do
-		quest_handle_victory(quest, savegame.battle_data)
+	if savegame.battle_data.quest then
+		quest_handle_victory(savegame.battle_data.quest, savegame.battle_data)
 	end
 	
 	-- kill the army we just defeated
