@@ -166,8 +166,18 @@ load_overworld()
 add_player_overview_button()
 add_army_attack_button()
 
+function place_armies()
+	for key, army in pairs(savegame.armies) do
+		-- check if the position is a coordinate tuple
+		if type(army.position) == "table" then
+			army_place_on_map(army, army.position.x, army.position.y)
+		end
+	end
+end
+
 function scenario_start()
 	save_overworld()
+	place_armies()
 end
 
 function side_turn()
