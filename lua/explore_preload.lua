@@ -9,7 +9,7 @@ wesnoth.dofile "~add-ons/Sandbox/lua/army.lua"
 
 function scenario_start()
 	-- man the guard posts(if any)
-	local army = savegame.armies[location.army]
+	local army = savegame.armies[location.armies.guard]
 	local positions = location.unit_positions
 	if positions.guards then
 		for i=1,math.min(#positions.guards, #army.units) do
@@ -19,7 +19,7 @@ function scenario_start()
 		end
 	end
 	
-	local civilians = savegame.armies[location.civilians]
+	local civilians = savegame.armies[location.armies.civilians]
 	if positions.civilians then
 		for i=1,math.min(#positions.civilians, #civilians.units) do
 			local position = positions.civilians[i]
@@ -29,7 +29,7 @@ function scenario_start()
 	end
 	
 
-	local recruits = savegame.armies[location.recruits]
+	local recruits = savegame.armies[location.armies.recruits]
 	if positions.recruits then
 		for i=1,math.min(#positions.recruits, #recruits.units) do
 			local position = positions.recruits[i]

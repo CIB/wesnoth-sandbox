@@ -26,8 +26,23 @@ function create_army(name, leader, behavior)
 end
 
 function kill_army(id)
+	cleanup_army(id)
 	savegame.armies[id] = nil
-	-- TODO: kill the individual units in the army
+end
+
+-- remove all invalid units from the army
+function cleanup_army(id)
+	local army = savegame.armies[id]
+	
+	if not army then return end
+	
+	for i=#army.units,1,-1 do
+		local unit = wesnoth.get_recall_units { id = army.units[i] }[1]
+		
+		if not unit then
+			table.remove(army.units, i)
+		end
+	end
 end
 
 function army_place_on_map(army, x, y)

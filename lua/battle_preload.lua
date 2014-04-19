@@ -69,7 +69,21 @@ function on_victory()
 	end
 	
 	-- kill the army we just defeated
-	kill_army(savegame.battle_data.army)
+	local defeated_army = savegame.armies[savegame.battle_data.army]
+	if defeated_army and not defeated_army.persistent then
+		kill_army(savegame.battle_data.army)
+	end
+	
+	cleanup_army(savegame.battle_data.army)
+	cleanup_army(savegame.battle_data.allied_army)
+	
+	if savegame.battle_data.location and savegame.battle_data.location.armies then
+		for key, value in pairs(savegame.battle_data.location.armies) do
+			if not savegame.armies[value] then
+				savegame.battle_data.location.armies[key] = nil
+			end
+		end
+	end
 	
 	save_player()
 end

@@ -7,18 +7,20 @@ function create_human_npc_function(town, recruitable)
 end
 
 function populate_town(town)
-	local leader = create_unique_NPC("Peasant", nil, "Humans", nil, create_human_citizen_personality(), 2)
 	local army = create_army("Town Populace", leader, nil)
 	populate_army(army, town.possible_recruits, town.guards, create_human_npc_function(town))
-	town.army = army.id
+	army.persistent = true
+	town.armies.guard = army.id
 	
 	local civilians = create_army("Town Populace", nil, nil)
 	populate_army(civilians, town.civilian_types, #town.unit_positions.civilians, create_human_npc_function(town))
-	town.civilians = civilians.id
+	civilians.persistent = true
+	town.armies.civilians = civilians.id
 	
 	local recruits = create_army("Recruits", nil, nil)
 	populate_army(recruits, town.possible_recruits, #town.unit_positions.recruits, create_human_npc_function(town, true))
-	town.recruits = recruits.id
+	recruits.persistent = true
+	town.armies.recruits = recruits.id
 end
 
 function generate_human_town(name, x, y)
@@ -40,6 +42,7 @@ function generate_human_town(name, x, y)
 			Crops = 20
 		},
 		npcs = {},
+		armies = {},
 		recruits = nil,
 		guards = 5,
 		faction = "Humans",
@@ -95,6 +98,7 @@ function generate_human_city(name, x, y)
 			Gold = 1000
 		},
 		npcs = {},
+		armies = {},
 		recruits = nil,
 		guards = 8,
 		faction = "Humans",
@@ -208,12 +212,12 @@ function on_month_passed.town(town)
 	
 
 	-- temporary for testing
-	if not town.bandit_occupation then
+	if not town.armies.bandit_occupation then
 		if helper.random(1, 10) == 1 then
 			local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), false, true)
 			local army = create_army("Bandits", leader, "bandits")
 			populate_army(army, {"Footpad", "Thug", "Thief"}, math.random(2, 6))
-			town.bandit_occupation = army.id
+			town.armies.bandit_occupation = army.id
 		end
 	end
 end
@@ -375,7 +379,7 @@ end
 -- main town dialog, called when moving on the town's tile
 function on_move.town(found_town)
 	if found_town then
-		if found_town.bandit_occupation then
+		if found_town.armies.bandit_occupation then
 			local choices = { _ "Drive out the bandits", _ "Leave" }
 			local choice_values = { true, false }
 			local tags = { speaker = "narrator", 
@@ -383,7 +387,7 @@ function on_move.town(found_town)
 			}
 			local user_choice = choice_values[helper.get_user_choice(tags, choices)]
 			if user_choice == true then
-				town_attack(found_town, found_town.bandit_occupation, found_town.army)
+				town_attack(found_town, found_town.armies.bandit_occupation, found_town.armies.guard)
 			end
 		else
 			local choices = { _"Enter", _ "Attack Town", _ "Leave" }
@@ -394,7 +398,7 @@ function on_move.town(found_town)
 			
 			local user_choice = choice_values[helper.get_user_choice(tags, choices)]
 			if user_choice == 2 then
-				town_attack(found_town, found_town.army, nil)
+				town_attack(found_town, found_town.armies.guard, nil)
 			elseif user_choice == 1 then
 				town_enter(found_town)
 			end

@@ -67,7 +67,7 @@ end
 
 -- handler called on all quests when the player moves to x,y on the world map
 function quest_handle_move(quest, x, y, movement_percentage)
-	if quest.type == "orc invasion" and x == quest.target_x and y == quest.target_y then
+	if quest.type == "orc invasion" and x == quest.target_x and y == quest.target_y and not quest.completed then
 		-- prepare for a battle
 		battle_data = {}
 		battle_data.army = quest.army    
