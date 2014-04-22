@@ -172,48 +172,47 @@ function on_month_passed.town(town)
 		end
 	end
 	
-	-- feed citizens
-	local citizens_fed = town.population
-	if town.population > town.resources["Crops"] then
-		citizens_fed = town.resources["Crops"]
+	-- check guards, hire new ones if we don't have enough
+	local guard = savegame.armies[town.armies.guard]
+	if #guard.units < town.guards then
+		local recruit_type = town.possible_recruits[helper.random(1, #town.possible_recruits)]
+		local unit_id, unit = create_human_npc_function(town, false)(recruit_type)
+		table.insert(guard.units, unit_id)
+		unit.variables.army = town.armies.guard.id
 	end
-	town.resources["Crops"] = town.resources["Crops"] - citizens_fed
-	
-	-- TODO: actually do some morale related stuff, rather than just killing citizens
-	town.population = citizens_fed
-	
-	-- guard wages
-	local guard_wage = 5
-	local can_pay_guards = math.min(town.guards, town.resources.Gold / guard_wage)
-	town.resources.Gold = town.resources.Gold - can_pay_guards * guard_wage
-	town.guards = can_pay_guards
 	
 	-- NPC's coming and going
 	if #town.npcs == 0 then
 		-- create a unique quest giver NPC
 		local quest_giver_id, quest_giver = create_unique_NPC("Javelineer", nil, town.faction, town, create_human_citizen_personality(), false)
-		
-		if helper.random(1, 2) == 1 then
-			local bandit_quest = generate_bandit_quest(quest_giver_id)
-			
-			if bandit_quest then
-				add_quest_to_npc(quest_giver_id, bandit_quest)
-			end
-		else			
-			local orc_quest = create_orc_invasion_quest(28, 18, nil, quest_giver_id)
-			
-			if orc_quest then
-				add_quest_to_npc(quest_giver_id, orc_quest)
-			end
-		end
 			
 		table.insert(town.npcs, quest_giver_id)
+	end
+	
+	-- update NPC quests
+	for _, npc_id in ipairs(town.npcs) do
+		local npc = unique_npcs[npc_id]
+		if not npc.quest then
+			if helper.random(1, 2) == 1 then
+				local bandit_quest = generate_bandit_quest(npc_id)
+				
+				if bandit_quest then
+					add_quest_to_npc(npc_id, bandit_quest)
+				end
+			else			
+				local orc_quest = create_orc_invasion_quest(28, 18, nil, npc_id)
+				
+				if orc_quest then
+					add_quest_to_npc(npc_id, orc_quest)
+				end
+			end
+		end
 	end
 	
 
 	-- temporary for testing
 	if not town.armies.bandit_occupation then
-		if helper.random(1, 10) == 1 then
+		if helper.random(1, 100) == 1 then
 			local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), false, true)
 			local army = create_army("Bandits", leader, "bandits")
 			populate_army(army, {"Footpad", "Thug", "Thief"}, math.random(2, 6))
