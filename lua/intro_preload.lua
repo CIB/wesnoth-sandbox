@@ -16,8 +16,17 @@ function select_leader()
 	local unit_at_location = wesnoth.get_units { x = V.x1, y = V.y1 }[1]
 	local previous_leader = wesnoth.get_units { canrecruit = true }
 	
+	-- check whether the unit has a male/female variant
+	local gender = wesnoth.unit_types[unit_at_location.type].__cfg.gender
+	local chosen_gender
+	if gender and gender:find(",") then
+		local choice_results = { "male", "female" }
+		local chosen_number = helper.get_user_choice({ speaker = "narrator", message = "You've chosen a unit with male and female variants, should your avatar be male or female?"}, {"Male", "Female"})
+		chosen_gender = choice_results[chosen_number]
+	end
+	
 	-- make new unit leader
-	local new_leader = wesnoth.create_unit { type = unit_at_location.type, name = previous_leader.name, side = 1, canrecruit = true, id="player1_leader", role="player1_leader" }
+	local new_leader = wesnoth.create_unit { type = unit_at_location.type, name = previous_leader.name, side = 1, canrecruit = true, id="player1_leader", role="player1_leader", gender = chosen_gender}
 	
 	-- delete all other units by making them private and then not
 	-- doing anything with them

@@ -41,10 +41,12 @@ function scenario_start()
 	end
 	
 	local allied_leader = wesnoth.get_units({side = 3, canrecruit = true})[1]
-	x, y = allied_leader.x, allied_leader.y
-	wesnoth.extract_unit(allied_leader)
-	if savegame.battle_data.allied_army then
-		place_army(savegame.battle_data.allied_army, 3, x, y)
+	if allied_leader then
+		x, y = allied_leader.x, allied_leader.y
+		wesnoth.extract_unit(allied_leader)
+		if savegame.battle_data.allied_army then
+			place_army(savegame.battle_data.allied_army, 3, x, y)
+		end
 	end
 	
 	if savegame.battle_data.quest then

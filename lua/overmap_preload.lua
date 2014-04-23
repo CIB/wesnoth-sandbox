@@ -161,6 +161,7 @@ end
 load_overworld()
 add_player_overview_button()
 add_army_attack_button()
+add_army_scout_button()
 
 function place_armies()
 	for key, army in pairs(savegame.armies) do
@@ -177,6 +178,16 @@ function scenario_start()
 	
 	local leader = wesnoth.get_units { side = 1, canrecruit = true }[1]
 	leader.moves = 6
+	
+	-- TODO: ask the player whether they want to see tutorial messages
+	if savegame.tutorial_messages == nil then
+		savegame.tutorial_messages = true
+	end
+	
+	if savegame.tutorial_messages and not savegame.tutorial_message_overworld then
+		savegame.tutorial_message_overworld = true
+		helper.dialog("This is the overmap. On it, you can move your warparty throughout wesnoth.\nLocations you can visit are marked on the map. You can enter them by moving your character onto the marked hex. Once you accept a quest, you will also find your quest destination marked in red on the map.\nOther warparties also move on the overmap. You can attack them by moving close to them, selecting them with right-click, and choosing \"Attack\". Be careful not to expend all your movement points before attacking, or the NPC warparty will move before you get a chance to attack.")
+	end
 end
 
 function side_turn()
@@ -196,6 +207,11 @@ function new_turn()
 				if not get_location(pos.x, pos.y) and math.random(1,1) == 1 then
 					create_bandit_camp(pos.x, pos.y)
 				end
+			end
+			
+			-- create the lich cave if it doesn't already exist
+			if not get_location(39, 10) then
+				create_lich_cave(39, 10)
 			end
 			
 			for key, location in ipairs(locations) do

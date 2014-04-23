@@ -246,7 +246,7 @@ function on_month_passed.town(town)
 					add_quest_to_npc(npc_id, bandit_quest)
 				end
 			else			
-				local orc_quest = create_orc_invasion_quest(28, 18, nil, npc_id)
+				local orc_quest = create_orc_invasion_quest(nil, npc_id)
 				
 				if orc_quest then
 					add_quest_to_npc(npc_id, orc_quest)

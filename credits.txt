@@ -1,1 +1,4 @@
 Null for the wesnoth overworld map
+
+maps/ford.map is a part of the map "The Ford of Abez" from HttT.
+maps/lich.map is directly taken from The Descent Into Darkness, "Endless Night"

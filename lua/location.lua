@@ -63,9 +63,32 @@ function on_move.bandit_camp(location)
 	return false
 end
 
+function on_move.lich_cave(location)
+	local user_choice = helper.get_user_choice({ speaker = "narrator", message = _ "The stench of rotting flesh hits you as you peer into the dark cave.. Do you wish to enter?"}, { _ "Yes", _ "No" })
+	
+	if user_choice == 1 then
+		-- prepare for a battle
+		battle_data = {}
+		battle_data.location = location
+		battle_data.army = location.army
+		battle_data.battle_handler = "default"
+		save_overworld()
+		
+		helper.quitlevel("lich")
+		return true
+	end
+	
+	-- return false to not interrupt the movement
+	return false
+end
+
 function on_draw.bandit_camp(location)
 	W.label({x=location.x, y=location.y, text=location.name, color="255,255,255"})
 	wesnoth.add_tile_overlay(location.x, location.y, { image = "terrain/castle/encampment/tent2.png" })
+end
+
+function on_draw.lich_cave(location)
+	W.label({x=location.x, y=location.y, text=location.name, color="255,255,255"})
 end
 
 function create_bandit_camp(x, y)
@@ -79,6 +102,24 @@ function create_bandit_camp(x, y)
 	local leader = create_unique_NPC("Bandit", nil, "Bandits", nil, create_human_citizen_personality(), 2)
 	local army = create_army("Bandits", leader, nil)
 	populate_army(army, {"Footpad", "Thug", "Thief"}, math.random(5, 12))
+	rval.army = army.id
+	
+	add_location(x, y, rval)
+	
+	return rval
+end
+
+function create_lich_cave(x, y)
+	local rval = {
+		location_type = "lich_cave",
+		name = "Lich Cave",
+		x = x,
+		y = y,
+	}
+	
+	local leader = create_unique_NPC("Lich", nil, "Undead", nil, create_human_citizen_personality(), 2)
+	local army = create_army("Undead", leader, nil)
+	populate_army(army, {"Shadow", "Wraith", "Necrophage", "Deathblade", "Revenant", "Bone Shooter", "Soulless"}, math.random(8, 12))
 	rval.army = army.id
 	
 	add_location(x, y, rval)

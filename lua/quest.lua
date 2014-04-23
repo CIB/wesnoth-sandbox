@@ -76,7 +76,7 @@ function quest_handle_move(quest, x, y, movement_percentage)
 		battle_data.quest = quest
 		save_overworld()
 		
-		helper.quitlevel("forest")
+		helper.quitlevel(quest.battle_map)
 		
 		return true
 	end
@@ -113,11 +113,39 @@ function quest_handle_victory(quest, battle_data)
 	if quest and (quest.type == "kill bandits" or quest.type == "orc invasion") then
 		quest.completed = true
 	end
+	
+	if quest.type == "orc invasion" then
+		-- get the leader of our allies
+		local allied_leader = wesnoth.get_units { side = 3, canrecruit = true }[1]
+		
+		if allied_leader then
+			helper.get_user_choice({ speaker = allied_leader.id, message = "We have slain the last of these foul creatures. Let us hope the news will spread quickly, so that the orcs will think twice before returning here again." }, { })
+		else
+			-- get any unit of our allies
+			local allied_unit = wesnoth.get_units { side = 3 }[1]
+			
+			if allied_unit then
+				helper.get_user_choice({ speaker = allied_unit.id, message = "That was close, it's a good thing you mercenaries were here." }, { })
+			else
+				helper.get_user_choice({ speaker = "narrator", message = "You hope you'll still get paid, even though miraculously only your own troops survived.." }, { })
+			end
+		end
+	end
 end
 
 
 -- create a new quest
-function create_orc_invasion_quest(x, y, deadline, giver)
+function create_orc_invasion_quest(deadline, giver)
+	local x, y, battle_map
+	
+	if helper.random(1, 2) == 1 then
+		x, y = 28, 18
+		battle_map = "ford"
+	else
+		x, y = 30, 19
+		battle_map = "forest"
+	end
+	
 	local quest = {
 		type = "orc invasion",
 		deadline = deadline,
@@ -133,7 +161,8 @@ function create_orc_invasion_quest(x, y, deadline, giver)
 			id = "orc_invasion_quest_complete",
 			default = _ "Oh, you survived the battle? Well, I guess that makes you eligible for pay.."
 		},
-		taken = nil -- time the quest was taken
+		taken = nil, -- time the quest was taken,
+		battle_map = battle_map
 	}
 	
 	-- generate orc and allied army
@@ -144,7 +173,7 @@ function create_orc_invasion_quest(x, y, deadline, giver)
 	
 	leader = create_unique_NPC("Lieutenant", nil, "Humans", nil, nil, false, true)
 	army = create_army("Humans", leader, "humans")
-	populate_army(army, {"Spearman", "Bowman", "Mage", "Fencer", "Cavalryman", "Horseman", "Heavy Infantryman"}, 8)
+	populate_army(army, {"Spearman", "Bowman", "Mage", "Fencer", "Cavalryman", "Horseman", "Heavy Infantryman"}, 6)
 	quest.allied_army = army.id
 	
 	return quest

@@ -158,6 +158,54 @@ function army_attack()
 	start_battle(army_at_location.id, "default", get_battle_map(V.x1, V.y1))
 end
 
+function army_all_units(army)
+	local rval = {}
+	
+	if army.leader then
+		table.insert(rval, army.leader)
+	end
+	
+	for _, id in ipairs(army.units) do
+		table.insert(rval, id)
+	end
+	
+	return rval
+end
+
+function army_scout()
+	-- TODO: make the success of this depend on several factors, such as unit sent to scout, distance, size of target party, etc.
+	--       possibly kill the unit sent to scout
+
+	local army_at_location
+	for i, army in pairs(savegame.armies) do
+		if army.position and army.position.x == V.x1 and army.position.y == V.y1 then
+			army_at_location = army
+		end
+	end
+	
+	local unit_amounts = {}
+	for _, unit_id in ipairs(army_all_units(army_at_location)) do
+		local unit = wesnoth.get_recall_units { id = unit_id }[1]
+		
+		if unit then
+			unit_amounts[unit.type] = (unit_amounts[unit.type] or 0) + 1
+		end
+	end
+	
+	-- TODO: draw little pictures of the unit types
+	local options = {}
+	for type, amount in pairs(unit_amounts) do
+		table.insert(options, tostring(amount).."x\t"..tostring(type))
+	end
+	
+	helper.get_user_choice({ speaker = "narrator", message = "Party composition:" }, options)
+end
+
 function add_army_attack_button()
 	helper.menu_item("army_attack_button", _ "Attack", nil, "army_attack", {{"have_unit", { x = "$x1", y = "$y1", side = 2, {"filter_adjacent", { side = 1}}}}})
+end
+
+
+function add_army_scout_button()
+	helper.menu_item("army_scout_button", _ "Scout", nil, "army_scout", {{"have_unit", { x = "$x1", y = "$y1", side = 2}}})
 end
