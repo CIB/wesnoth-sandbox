@@ -39,7 +39,7 @@ function generate_human_town(name, x, y)
 			"Peasant"
 		},
 		production = {
-			Crops = 20
+			Crops = 200
 		},
 		npcs = {},
 		armies = {},
@@ -84,7 +84,7 @@ function generate_human_city(name, x, y)
 		name = name,
 		resources = {
 			Gold = helper.random(100, 1000),
-			Crops = helper.random(200, 1000)
+			Crops = nil -- fill in once we know population
 		},
 		population = helper.random(100, 1000),
 		possible_recruits = {
@@ -134,6 +134,8 @@ function generate_human_city(name, x, y)
 		}
 	}
 	
+	rval.resources.Crops = rval.population * 20
+	
 	populate_town(rval)
 	
 	return rval
@@ -160,16 +162,60 @@ function generate_towns()
 	add_town(generate_human_city("Weldyn", 35, 28))
 end
 
+function npc_trade(army, town)
+	-- trade away food if we have more of it than we need in 3 months
+	local food = town.resources.Crops
+	town.production.Crops = town.production.Crops or 0
+	helper.message(town.name.." Food: "..town.resources.Crops.." Gold: "..town.resources.Gold.." Population: "..town.population.." Production: "..town.production.Crops.."/"..town.population)
+	if food > town.population * 2 and town.production.Crops > town.population then
+		local trade_away = food - town.population * 2
+		
+		if army.resources.Gold < trade_away * 0.5 then
+			trade_away = math.floor(army.resources.Gold / 2)
+		end
+		
+		if trade_away > 0 then
+			helper.message("Buying "..tostring(trade_away).." crops from "..town.name)
+			town.resources.Crops = town.resources.Crops - trade_away
+			town.resources.Gold = town.resources.Gold + trade_away * 0.5
+			army.resources.Crops = army.resources.Crops + trade_away
+			army.resources.Gold = army.resources.Gold - trade_away * 0.5
+		end
+	end
+	
+	-- buy food if we don't have enough of it
+	if food < town.population * 30 and town.production.Crops < town.population then
+		local buy = town.population * 30 - food
+		
+		if town.resources.Gold < buy then
+			buy = town.resources.Gold
+		end
+		if army.resources.Crops < buy then
+			buy = army.resources.Crops
+		end
+		
+		if town.resources.Gold >= buy and army.resources.Crops >= buy then
+			helper.message("Selling "..tostring(buy).." crops to "..town.name)
+			town.resources.Crops = town.resources.Crops + buy
+			town.resources.Gold = town.resources.Gold - buy
+			army.resources.Crops = army.resources.Crops - buy
+			army.resources.Gold = army.resources.Gold + buy
+		end
+	end
+end
 
 function on_month_passed.town(town)
-	-- trade and production
-	for resource, amount in pairs(town.resources) do
-		if resource ~= "Gold" then
-			local sell_amount = math.floor(0.2 * amount)
-			local production = town.production[resource] or 0
-			town.resources[resource] = town.resources[resource] - sell_amount + production
-			town.resources.Gold = town.resources.Gold + get_resource_value(town, resource) * sell_amount
-		end
+	-- production
+	for resource, amount in pairs(town.production) do
+		town.resources[resource] = (town.resources[resource] or 0) + town.production[resource]
+	end
+	
+	-- consumption
+	town.resources.Crops = town.resources.Crops - town.population
+	if town.resources.Crops < 0 then
+		local death = - town.resources.Crops
+		town.resources.Crops = 0
+		town.population = town.population - death
 	end
 	
 	-- check guards, hire new ones if we don't have enough

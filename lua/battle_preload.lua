@@ -55,7 +55,6 @@ end
 function side_turn()
 	local enemy_units = wesnoth.get_units {side = 2}
 	if #enemy_units == 0 then
-		on_victory()
 		helper.quitlevel("overmap")
 	end
 end

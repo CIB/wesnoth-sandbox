@@ -62,12 +62,24 @@ end
 
 battle_handlers.default = { }
 function battle_handlers.default.on_victory()
-	S.gold = math.random(1, 10)
-	S.fame = math.random(1, 10)
 	wesnoth.message( _ "You are victorious!")
-	wesnoth.message( _ "You find {gold} gold pieces on your enemies' corpses." )
+	
+	-- by default we loot the army we fought
+	if savegame.battle_data.army then
+		local army = savegame.armies[savegame.battle_data.army]
+		for resource, amount in pairs(army.resources) do
+			if amount > 0 then
+				S.resource = resource
+				S.amount = amount
+				
+				wesnoth.message( _ "You find {amount} {resource} on your enemies' corpses." )
+				savegame.player.resources[resource] = (savegame.player.resources[resource] or 0) + amount
+			end
+		end
+	end
+
+	S.fame = math.random(1, 10)
 	wesnoth.message( _ "Songs of your valour on the battlefield spread. You gain {fame} fame." )
 	
-	player.gold = player.gold + S.gold
 	player.fame = player.fame + S.fame
 end

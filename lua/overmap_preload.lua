@@ -71,6 +71,8 @@ function player_moved(x1, y1)
 	-- full movement is how far you can get in one full day(24 hours)
 	]]
 	
+	W.reset_fog { reset_view = true }
+	W.redraw { clear_shroud = true }
 
 	for key, quest in ipairs(savegame.quests) do
 		-- If a battle started or the like, do not process anything else
@@ -117,6 +119,22 @@ function save_overworld()
 	V.savegame = pickle(savegame)
 end
 
+function create_trader()
+	local leader = create_unique_NPC("Cavalryman", nil, "Humans", nil, create_human_citizen_personality(), false, true)
+	local army = create_army("Humans", leader, "trader")
+	populate_army(army, {"Cavalryman", "Peasant", "Bowman", "Spearman"}, math.random(4, 6))
+	army.destinations = {
+		{ x = 35, y = 28}, -- weldyn    
+		{ x = 34, y = 25},
+		{ x = 30, y = 24},
+		{ x = 30, y = 26},
+		{ x = 11, y = 16}, -- elensefar
+	}
+	army.position = { x = 33, y = 27 }
+	army.resources.Crops = math.random(500, 1000)
+	army.resources.Gold = math.random(500, 1000)
+end
+
 -- load gamedata
 function load_overworld()
 	-- if there's no savegame yet, abort
@@ -125,6 +143,7 @@ function load_overworld()
 		savegame.quests = {}
 		generate_player()
 		generate_towns()
+		create_trader()
 		return
 	end
 	

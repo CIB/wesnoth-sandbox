@@ -143,3 +143,42 @@ function helper.get_portrait(unit)
 		return unit_type.__cfg.image
 	end
 end
+
+-- copied from the official wesnoth helpers
+function helper.move_unit_fake_no_scroll(filter, to_x, to_y)
+	W.store_unit({
+	[1] = { "filter", filter },
+	variable = "LUA_move_unit",
+	kill = false
+	})
+	local from_x = wesnoth.get_variable("LUA_move_unit.x")
+	local from_y = wesnoth.get_variable("LUA_move_unit.y")
+
+	if to_x < from_x then
+		wesnoth.set_variable("LUA_move_unit.facing", "sw")
+	elseif to_x > from_x then
+		wesnoth.set_variable("LUA_move_unit.facing", "se")
+	end
+	wesnoth.set_variable("LUA_move_unit.x", to_x)
+	wesnoth.set_variable("LUA_move_unit.y", to_y)
+
+	W.kill({
+	x = from_x,
+	y = from_y,
+	animate = false,
+	fire_event = false
+	})
+
+	W.move_unit_fake({
+	type = "$LUA_move_unit.type",
+	gender = "$LUA_move_unit.gender",
+	variation = "$LUA_move_unit.variation",
+	side = "$LUA_move_unit.side",
+	x = from_x .. ',' .. to_x,
+	y = from_y .. ',' .. to_y
+	})
+
+	W.unstore_unit({ variable="LUA_move_unit", find_vacant=true })
+	W.redraw({})
+	wesnoth.set_variable("LUA_move_unit")
+end

@@ -15,7 +15,8 @@ function create_army(name, leader, behavior)
 		overmap_unit_id = nil,
 		units = {}, -- list of units serialized with store_unit
 		position = nil,
-		behavior = behavior
+		behavior = behavior,
+		resources = { Gold = math.random(10, 100), Crops = math.random(50, 200) }
 	}
 	if leader then
 		local npc = unique_npcs[rval.leader]
@@ -64,7 +65,7 @@ function army_move_toward(army, army_unit, x, y, turns)
 	local destination = furthest[#furthest]
 	if not destination or destination[1] == army_unit.x and destination[2] == army_unit.y then return false end
 	
-	helper.move_unit_fake({id = army_unit.id}, destination[1], destination[2])
+	helper.move_unit_fake_no_scroll({id = army_unit.id}, destination[1], destination[2])
 	army.position = { x = destination[1], y = destination[2] }
 	return true
 end
@@ -83,20 +84,6 @@ function get_army_unit(army)
 end
 
 army_behaviors = {}
-function army_behaviors.caravan(army, turns)
-	-- caravans just move from one location to the next
-	army.next_destination = army.next_destination or 1
-	
-	local next_destination = army.destinations[army.next_destination]
-	army_move_toward(army, get_army_unit(army), next_destination.x, next_destination.y, turns)
-	
-	if army.position.x == next_destination.x and army.position.y == next_destination.y then
-		army.next_destination = army.next_destination + 1
-		if army.next_destination > #army.destinations then
-			army.next_destination = 1
-		end
-	end
-end
 
 function army_behaviors.bandits(army, turns)
 	-- bandits "patrol" around their hideout
@@ -108,6 +95,38 @@ function army_behaviors.bandits(army, turns)
 	
 	if not army_move_toward(army, get_army_unit(army), army.destination.x, army.destination.y, turns) then
 		army.destination = nil -- recalculate destination if movement failed
+	end
+end
+
+function army_behaviors.trader(army, turns)
+	-- move between the regular towns to visit
+	if not army.destination then
+		army.destination = army.destinations[1]
+	end
+	
+	if army.position.x == army.destination.x and army.position.y == army.destination.y then
+		local next_i
+		for i, dest in ipairs(army.destinations) do
+			if dest.x == army.position.x and dest.y == army.position.y then
+				next_i = i + 1
+				break
+			end
+		end
+		
+		if next_i > #army.destinations then
+			next_i = 1
+		end
+		
+		army.destination = army.destinations[next_i]
+	end
+	
+	army_move_toward(army, get_army_unit(army), army.destination.x, army.destination.y, turns)
+	
+	-- do trading
+	for _, town in ipairs(savegame.towns) do
+		if town.x == army.position.x and town.y == army.position.y then
+			npc_trade(army, town)
+		end
 	end
 end
 
